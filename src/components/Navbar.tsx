@@ -19,7 +19,7 @@ export default function Navbar({ isScrolled, mobileMenuOpen, setMobileMenuOpen, 
       >
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
           <a href="#" className="flex items-center gap-2">
-            <img src="../assests/azendly.png" alt="Azendly Logo" className="h-10 w-auto" />
+            <img src="../assets/azendly.png" alt="Azendly Logo" className="h-10 w-auto" />
           </a>
 
           {/* Desktop Nav */}
