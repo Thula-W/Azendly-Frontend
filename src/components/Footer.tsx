@@ -13,10 +13,10 @@ export default function Footer() {
         </div>
 
         <div className="flex items-center gap-6">
-          <a href="#" className="text-gray-500 hover:text-white transition-colors">
+          <a href="https://www.linkedin.com/company/azendly/" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-white transition-colors">
             <Linkedin className="w-5 h-5" />
           </a>
-          <a href="#" className="text-gray-500 hover:text-white transition-colors">
+          <a href="mailto:azendly.ai@gmail.com" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-white transition-colors">
             <Mail className="w-5 h-5" />
           </a>
         </div>

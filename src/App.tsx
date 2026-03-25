@@ -101,7 +101,7 @@ export default function App() {
           isSubmitted={isSubmitted}
           handleJoinWaitlist={handleJoinWaitlist}
           handleOptionSelect={handleOptionSelect}
-          handleNextStep={handleNextStep}
+          // handleNextStep={handleNextStep}
           handleSubmitFeedback={handleSubmitFeedback}
           setIsSubmitted={setIsSubmitted}
         />
