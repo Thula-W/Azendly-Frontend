@@ -29,6 +29,7 @@ export default function App() {
   const [formAnswers, setFormAnswers] = useState<any[]>([]);
   const [isJoined, setIsJoined] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isJoiningWaitlist, setIsJoiningWaitlist] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -38,23 +39,28 @@ export default function App() {
 
   const handleJoinWaitlist = async (e: FormEvent) => {
     e.preventDefault();
-    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    const res = await fetch(
-      "https://swdrghckoedbyhtjttrv.supabase.co/functions/v1/join-waitlist",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-           "apikey": anonKey,
-           "Authorization": `Bearer ${anonKey}`
-        },
-        body: JSON.stringify(userData)
+    setIsJoiningWaitlist(true);
+    try {
+      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      const res = await fetch(
+        "https://swdrghckoedbyhtjttrv.supabase.co/functions/v1/join-waitlist",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": anonKey,
+            "Authorization": `Bearer ${anonKey}`
+          },
+          body: JSON.stringify(userData)
+        }
+      );
+
+      if (res.ok) {
+        setIsJoined(true);
+        setFormStep(0);
       }
-    );
-  
-    if (res.ok) {
-      setIsJoined(true);
-      setFormStep(0);
+    } finally {
+      setIsJoiningWaitlist(false);
     }
   };
 
@@ -113,6 +119,7 @@ export default function App() {
           formAnswers={formAnswers}
           isJoined={isJoined}
           isSubmitted={isSubmitted}
+          isJoiningWaitlist={isJoiningWaitlist}
           handleJoinWaitlist={handleJoinWaitlist}
           handleOptionSelect={handleOptionSelect}
           // handleNextStep={handleNextStep}

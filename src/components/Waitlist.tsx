@@ -1,6 +1,6 @@
 import { FormEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Loader2 } from 'lucide-react';
 import { FORM_STEPS } from '../constants';
 
 interface WaitlistProps {
@@ -10,6 +10,7 @@ interface WaitlistProps {
   formAnswers: string[];
   isJoined: boolean;
   isSubmitted: boolean;
+  isJoiningWaitlist: boolean;
   handleJoinWaitlist: (e: FormEvent) => void;
   handleOptionSelect: (option: string) => void;
   handleSubmitFeedback: (e: FormEvent) => void;
@@ -23,6 +24,7 @@ export default function Waitlist({
   formAnswers,
   isJoined,
   isSubmitted,
+  isJoiningWaitlist,
   handleJoinWaitlist,
   handleOptionSelect,
   handleSubmitFeedback,
@@ -99,9 +101,14 @@ export default function Waitlist({
                     </div>
                     <button 
                       type="submit"
-                      className="w-full py-5 rounded-2xl bg-gradient-to-r from-purple-500 to-cyan-500 text-white font-bold text-lg hover:scale-[1.02] transition-all shadow-lg shadow-cyan-500/20 uppercase tracking-widest"
+                      disabled={isJoiningWaitlist}
+                      aria-busy={isJoiningWaitlist}
+                      className="w-full py-5 rounded-2xl bg-gradient-to-r from-purple-500 to-cyan-500 text-white font-bold text-lg hover:scale-[1.02] transition-all shadow-lg shadow-cyan-500/20 uppercase tracking-widest disabled:opacity-70 disabled:pointer-events-none disabled:hover:scale-100 inline-flex items-center justify-center gap-2"
                     >
-                      GET EARLY ACCESS
+                      {isJoiningWaitlist && (
+                        <Loader2 className="w-5 h-5 shrink-0 animate-spin" aria-hidden />
+                      )}
+                      {isJoiningWaitlist ? 'Joining…' : 'GET EARLY ACCESS'}
                     </button>
                     <p className="text-center text-sm text-gray-500 leading-relaxed">
                       Get early access when we launch. No spam just important updates and your invite.
