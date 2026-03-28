@@ -36,9 +36,23 @@ export default function App() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleJoinWaitlist = (e: FormEvent) => {
+  const handleJoinWaitlist = async (e: FormEvent) => {
     e.preventDefault();
-    if (userData.name && userData.email) {
+    const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    const res = await fetch(
+      "https://swdrghckoedbyhtjttrv.supabase.co/functions/v1/join-waitlist",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+           "apikey": anonKey,
+           "Authorization": `Bearer ${anonKey}`
+        },
+        body: JSON.stringify(userData)
+      }
+    );
+  
+    if (res.ok) {
       setIsJoined(true);
       setFormStep(0);
     }
