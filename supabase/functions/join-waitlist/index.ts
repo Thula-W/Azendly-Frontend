@@ -53,8 +53,9 @@ serve(async (req) => {
       );
     }
 
-    const verifyUrl = `http://localhost:3000/verify?token=${token}`;
-    // 👉 change to your domain in prod
+    // Open the marketing site with a token; the SPA calls verify-email with Authorization headers.
+    const siteUrl = (Deno.env.get("FRONTEND_URL") ?? "http://localhost:3000").replace(/\/$/, "");
+    const verifyUrl = `${siteUrl}/?waitlist_verify=1&token=${encodeURIComponent(token)}#early-access`;
 
     await resend.emails.send({
       from: "Azendly <onboarding@azendly.net>",

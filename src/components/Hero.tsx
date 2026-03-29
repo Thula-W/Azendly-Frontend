@@ -1,4 +1,5 @@
 import { motion } from 'motion/react';
+import { scrollToWaitlist } from '../lib/scrollToWaitlist';
 
 export default function Hero() {
   return (
@@ -20,7 +21,7 @@ export default function Hero() {
           </p>
           <div className="flex flex-col items-center justify-center gap-4">
             <button 
-              onClick={() => document.getElementById('early-access')?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={() => scrollToWaitlist()}
               className="gradient-border px-10 py-5 rounded-full text-xl font-bold hover:scale-105 transition-transform shadow-lg shadow-cyan-500/20"
             >
               JOIN THE WAITLIST

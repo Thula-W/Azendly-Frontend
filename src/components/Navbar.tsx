@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { Menu, X } from 'lucide-react';
 import { NAV_LINKS } from '../constants';
+import { scrollToHash } from '../lib/scrollToWaitlist';
 
 interface NavbarProps {
   isScrolled: boolean;
@@ -97,8 +98,7 @@ export default function Navbar({ isScrolled, mobileMenuOpen, setMobileMenuOpen, 
                     if (link.name === 'Login') openAuth('login');
                     else if (link.name === 'Get Started') openAuth('signup');
                     else {
-                      const el = document.querySelector(link.href);
-                      el?.scrollIntoView({ behavior: 'smooth' });
+                      scrollToHash(link.href);
                     }
                     setMobileMenuOpen(false);
                   }}

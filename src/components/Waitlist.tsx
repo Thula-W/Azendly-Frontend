@@ -1,6 +1,6 @@
 import { FormEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { CheckCircle2, Loader2 } from 'lucide-react';
+import { CheckCircle2, Loader2, Mail } from 'lucide-react';
 import { FORM_STEPS } from '../constants';
 
 interface WaitlistProps {
@@ -11,7 +11,12 @@ interface WaitlistProps {
   isJoined: boolean;
   isSubmitted: boolean;
   isJoiningWaitlist: boolean;
+  verificationPending: boolean;
+  isVerifyingFromLink: boolean;
+  verifyLinkError: string | null;
+  joinError: string | null;
   handleJoinWaitlist: (e: FormEvent) => void;
+  handleRetryVerification: () => void;
   handleOptionSelect: (option: string) => void;
   handleSubmitFeedback: (e: FormEvent) => void;
   setIsSubmitted: (submitted: boolean) => void;
@@ -25,7 +30,12 @@ export default function Waitlist({
   isJoined,
   isSubmitted,
   isJoiningWaitlist,
+  verificationPending,
+  isVerifyingFromLink,
+  verifyLinkError,
+  joinError,
   handleJoinWaitlist,
+  handleRetryVerification,
   handleOptionSelect,
   handleSubmitFeedback,
   setIsSubmitted
@@ -40,43 +50,102 @@ export default function Waitlist({
             <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/10 blur-[100px] -z-10" />
 
             <div className="text-center mb-12">
-              {!isJoined ? (
-                <h3 className="text-4xl md:text-5xl font-black tracking-tighter mb-6 leading-tight text-white">
-                  BE THE FIRST TO <br className="md:hidden"  />
-                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-cyan-400">
-                    HIRE FASTER.
-                  </span>
-                </h3>
-              ) : (
-                <h3 className="text-4xl md:text-5xl font-black tracking-tighter mb-6 leading-tight text-white">
-                  HELP US MAKE AZENDLY <br />
-                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-cyan-400">
-                    BETTER FOR YOU.
-                  </span>
-                </h3>
-              )}
-              {!isJoined ? (
-                <div className="space-y-4">
+              {isVerifyingFromLink ? (
+                <>
+                  <h3 className="text-4xl md:text-5xl font-black tracking-tighter mb-6 leading-tight text-white">
+                    CONFIRMING YOUR <br className="md:hidden" />
+                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-cyan-400">
+                      EMAIL
+                    </span>
+                  </h3>
                   <p className="text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
-                    Join the Azendly waitlist and get early access to smarter resume screening before everyone else.
+                    One moment while we verify your link…
                   </p>
-                </div>
+                </>
+              ) : verificationPending ? (
+                <>
+                  <h3 className="text-4xl md:text-5xl font-black tracking-tighter mb-6 leading-tight text-white">
+                    VERIFY YOUR <br className="md:hidden" />
+                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-cyan-400">
+                      EMAIL
+                    </span>
+                  </h3>
+                  <p className="text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
+                    We sent a confirmation link to <span className="text-white font-medium">{userData.email}</span>. Open it to unlock the next step.
+                  </p>
+                </>
+              ) : !isJoined ? (
+                <>
+                  <h3 className="text-4xl md:text-5xl font-black tracking-tighter mb-6 leading-tight text-white">
+                    BE THE FIRST TO <br className="md:hidden"  />
+                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-cyan-400">
+                      HIRE FASTER.
+                    </span>
+                  </h3>
+                  <div className="space-y-4">
+                    <p className="text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
+                      Join the Azendly waitlist and get early access to smarter resume screening before everyone else.
+                    </p>
+                  </div>
+                </>
               ) : (
-                <p className="text-xl text-cyan-400 font-bold tracking-widest uppercase">
-                  You’re in. Early access secured.
-                </p>
+                <>
+                  <h3 className="text-4xl md:text-5xl font-black tracking-tighter mb-6 leading-tight text-white">
+                    HELP US MAKE AZENDLY <br />
+                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-cyan-400">
+                      BETTER FOR YOU.
+                    </span>
+                  </h3>
+                  <p className="text-xl text-cyan-400 font-bold tracking-widest uppercase">
+                    You’re in. Early access secured.
+                  </p>
+                </>
               )}
             </div>
 
             {!isSubmitted ? (
               <div>
-                {formStep === -1 ? (
+                {isVerifyingFromLink ? (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="max-w-md mx-auto text-center py-12 flex flex-col items-center gap-6"
+                  >
+                    <Loader2 className="w-12 h-12 text-cyan-400 animate-spin" aria-hidden />
+                    <p className="text-gray-500 text-sm">Securing your spot on the waitlist</p>
+                  </motion.div>
+                ) : verificationPending ? (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="max-w-md mx-auto text-center space-y-8 py-4"
+                  >
+                    <div className="w-20 h-20 rounded-full bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mx-auto">
+                      <Mail className="w-10 h-10 text-cyan-400" aria-hidden />
+                    </div>
+                    <p className="text-gray-400 leading-relaxed">
+                      After you verify, this page will continue with a few quick questions. You can close this tab and use the link from your email, or try again with a different address below.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleRetryVerification}
+                      className="w-full py-4 rounded-2xl border border-white/15 text-white font-semibold hover:bg-white/5 transition-colors"
+                    >
+                      Try again with another email
+                    </button>
+                  </motion.div>
+                ) : formStep === -1 ? (
                   <motion.form 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     onSubmit={handleJoinWaitlist}
                     className="space-y-6 max-w-md mx-auto"
                   >
+                    {(joinError || verifyLinkError) && (
+                      <p className="text-center text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3" role="alert">
+                        {joinError ?? verifyLinkError}
+                      </p>
+                    )}
                     <div className="space-y-4">
                       <div className="relative">
                         <input 
