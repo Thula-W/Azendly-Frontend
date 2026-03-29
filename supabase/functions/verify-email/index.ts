@@ -68,7 +68,7 @@ serve(async (req) => {
       `,
     });
 
-    return json({ ok: true });
+    return json({ ok: true, email: data.email });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Something went wrong";
     return json({ error: message }, 500);

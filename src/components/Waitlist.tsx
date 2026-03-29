@@ -18,7 +18,7 @@ interface WaitlistProps {
   handleJoinWaitlist: (e: FormEvent) => void;
   handleRetryVerification: () => void;
   handleOptionSelect: (option: string) => void;
-  handleSubmitFeedback: (e: FormEvent) => void;
+  handleSubmitFeedback: () => void;
   setIsSubmitted: (submitted: boolean) => void;
 }
 

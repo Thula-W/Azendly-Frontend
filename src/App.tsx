@@ -91,6 +91,7 @@ export default function App() {
         return;
       }
 
+      setUserData((prev) => ({ ...prev, email: result.email }));
       setIsJoined(true);
       setFormStep(0);
       setVerificationPending(false);
@@ -110,7 +111,7 @@ export default function App() {
     setJoinError(null);
     setVerifyLinkError(null);
     try {
-      const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      const anonKey = (import.meta as ImportMeta & { env: Record<string, string> }).env.VITE_SUPABASE_ANON_KEY;
       const res = await fetch(
         "https://swdrghckoedbyhtjttrv.supabase.co/functions/v1/join-waitlist",
         {
@@ -171,9 +172,30 @@ export default function App() {
     }
   };
 
-  const handleSubmitFeedback = (e: FormEvent) => {
-    e.preventDefault();
-    setIsSubmitted(true);
+  const handleSubmitFeedback = async () => {
+    const anonKey = (import.meta as ImportMeta & { env: Record<string, string> }).env.VITE_SUPABASE_ANON_KEY;
+
+    try {
+      await fetch(
+        "https://swdrghckoedbyhtjttrv.supabase.co/functions/v1/submit-answers",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": anonKey,
+            "Authorization": `Bearer ${anonKey}`
+          },
+          body: JSON.stringify({
+            email: userData.email,
+            answers: formAnswers
+          })
+        }
+      );
+    } catch (error) {
+      console.error('Failed to submit feedback answers', error);
+    } finally {
+      setIsSubmitted(true);
+    }
   };
 
   return (
