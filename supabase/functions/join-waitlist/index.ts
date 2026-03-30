@@ -64,7 +64,7 @@ serve(async (req) => {
       subject: "Azendly - Verify your email",
       html: `
         <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-        <h2 style="color: #a855f7;">Hi ${name}, Welcome to Azendly! 🚀</h2>
+        <h2>Hi ${name}, Welcome to Azendly! 🚀</h2>
         <p>You're now among the first to access smarter resume screening that saves you hours and helps you hire the best candidates faster than your competitors.</p>
         
         <p>To confirm your email and secure your spot, click the button below:</p>

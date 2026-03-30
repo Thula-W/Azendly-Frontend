@@ -10,13 +10,12 @@ export const NAV_LINKS = [
 export const FORM_STEPS = [
   {
     id: 1,
-    question: "What’s your biggest challenge when screening candidates?",
+    question: "How many resumes do you review per month?",
     options: [
-      "Too many irrelevant resumes",
-      "Screening takes too much time",
-      "Missing strong candidates",
-      "Candidates don’t match job requirements",
-      "Inconsistent evaluation"
+      "0–100",
+      "100–250",
+      "250–1000",
+      "1000+"
     ]
   },
   {
@@ -31,12 +30,13 @@ export const FORM_STEPS = [
   },
   {
     id: 3,
-    question: "How many resumes do you review per month?",
+    question: "What’s your biggest challenge when screening candidates?",
     options: [
-      "0–50",
-      "50–200",
-      "200–500",
-      "500+"
+      "Too many irrelevant resumes",
+      "Screening takes too much time",
+      "Missing strong candidates",
+      "Candidates don’t match job requirements",
+      "Inconsistent evaluation"
     ]
   }
 ];

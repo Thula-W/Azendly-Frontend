@@ -10,6 +10,7 @@ interface WaitlistProps {
   formAnswers: string[];
   isJoined: boolean;
   isSubmitted: boolean;
+  isLoading :boolean;
   isJoiningWaitlist: boolean;
   verificationPending: boolean;
   isVerifyingFromLink: boolean;
@@ -29,6 +30,7 @@ export default function Waitlist({
   formAnswers,
   isJoined,
   isSubmitted,
+  isLoading,
   isJoiningWaitlist,
   verificationPending,
   isVerifyingFromLink,
@@ -71,7 +73,7 @@ export default function Waitlist({
                     </span>
                   </h3>
                   <p className="text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
-                    We sent a confirmation link to <span className="text-white font-medium">{userData.email}</span>. Open it to unlock the next step.
+                    Hi <span className="text-white font-medium">{userData.name}</span>, We sent a confirmation link to <span className="text-white font-medium">{userData.email}</span>. Please verify your email.
                   </p>
                 </>
               ) : !isJoined ? (
@@ -124,7 +126,7 @@ export default function Waitlist({
                       <Mail className="w-10 h-10 text-cyan-400" aria-hidden />
                     </div>
                     <p className="text-gray-400 leading-relaxed">
-                      After you verify, this page will continue with a few quick questions. You can close this tab and use the link from your email, or try again with a different address below.
+                    Didn’t get the email? Please check your spam or junk folder.
                     </p>
                     <button
                       type="button"
@@ -222,17 +224,17 @@ export default function Waitlist({
                           {FORM_STEPS[formStep].options.map((option) => (
                             <label
                               key={option}
-                              className={`flex items-center gap-4 w-full p-5 rounded-2xl border cursor-pointer transition-all ${
+                              className={`flex items-center gap-4 w-full p-4 rounded-2xl border cursor-pointer transition-all ${
                                 formAnswers[formStep] === option 
                                   ? 'bg-white/10 border-cyan-500/50 text-white' 
                                   : 'bg-white/5 border-white/5 text-gray-400 hover:bg-white/10 hover:border-white/20'
                               }`}
                             >
-                              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+                              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${
                                 formAnswers[formStep] === option ? 'border-cyan-400' : 'border-gray-600'
                               }`}>
                                 {formAnswers[formStep] === option && (
-                                  <div className="w-2.5 h-2.5 rounded-full bg-cyan-400" />
+                                  <div className="w-2 h-2 rounded-full bg-cyan-400" />
                                 )}
                               </div>
                               <input 
@@ -255,13 +257,16 @@ export default function Waitlist({
                         <button 
                           onClick={handleSubmitFeedback}
                           disabled={formAnswers.length < FORM_STEPS.length}
-                          className={`px-8 py-4 rounded-full font-bold transition-all ${
+                          className={`px-8 py-4 rounded-full font-bold transition-all inline-flex items-center justify-center gap-2 ${
                             formAnswers.length === FORM_STEPS.length 
                               ? 'bg-gradient-to-r from-purple-500 to-cyan-500 text-white hover:scale-105' 
                               : 'bg-white/5 text-gray-600 cursor-not-allowed'
                           }`}
                         >
-                          SUBMIT
+                          {isLoading && (
+                              <Loader2 className="w-5 h-5 shrink-0 animate-spin" aria-hidden />
+                            )}
+                            SUBMIT
                         </button>
                         <button 
                           onClick={() => setIsSubmitted(true)}

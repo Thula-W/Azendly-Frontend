@@ -38,6 +38,7 @@ export default function App() {
   const [isJoined, setIsJoined] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isJoiningWaitlist, setIsJoiningWaitlist] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [verificationPending, setVerificationPending] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
   const [isVerifyingFromLink, setIsVerifyingFromLink] = useState(shouldVerifyFromEmailLink);
@@ -173,6 +174,7 @@ export default function App() {
   };
 
   const handleSubmitFeedback = async () => {
+    setIsLoading(true)
     const anonKey = (import.meta as ImportMeta & { env: Record<string, string> }).env.VITE_SUPABASE_ANON_KEY;
 
     try {
@@ -221,6 +223,7 @@ export default function App() {
           formAnswers={formAnswers}
           isJoined={isJoined}
           isSubmitted={isSubmitted}
+          isLoading= {isLoading}
           isJoiningWaitlist={isJoiningWaitlist}
           verificationPending={verificationPending}
           isVerifyingFromLink={isVerifyingFromLink}
