@@ -23,7 +23,7 @@ export default function Problem() {
           
           <div className="text-xl md:text-2xl text-gray-400 leading-relaxed max-w-3xl mx-auto space-y-8">
             <p>
-              You post a role and within hours, the flood starts. Most candidates don’t match your requirements. A few seem promising. But finding the right one? It takes hours of manual screening. And while you’re still reviewing resumes… top candidates are already getting offers.
+              You post a role and within hours resumes start to flood. Most candidates don’t match your requirements. A few seem promising. But finding the right one? It takes hours of manual screening. And while you’re still reviewing resumes… top candidates are already getting offers.
             </p>
             <p className="text-white font-bold border-t border-white/5 pt-8">
               The real cost isn’t just time. <span className="text-cyan-400">It’s missing the best talent.</span>
