@@ -5,7 +5,7 @@ export default function Footer() {
     <footer className="py-12 px-6 border-t border-white/5 bg-[#0A0A0B]">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
         <div className="flex items-center gap-2">
-          <img src="../public/azendly.png" alt="Azendly Logo" className="h-8 w-auto opacity-50" />
+          <img src="/azendly.png" alt="Azendly Logo" className="h-8 w-auto opacity-50" />
         </div>
         
         <div className="text-sm text-gray-500 font-medium tracking-wide">
