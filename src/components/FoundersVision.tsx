@@ -7,7 +7,7 @@ export default function FoundersVision() {
             <div className="p-[3px] rounded-2xl bg-gradient-to-br from-purple-500/40 to-cyan-500/40">
               <div className="w-48 h-48 md:w-64 md:h-64 flex-shrink-0 rounded-[calc(1rem-3px)] overflow-hidden flex items-center justify-center bg-[#0D0D0F]">
                 <img 
-                  src="../assets/azendly.png" 
+                  src="../public/azendly.png" 
                   alt="Azendly Logo" 
                   className="w-3/4 h-auto opacity-80"
                   referrerPolicy="no-referrer"
