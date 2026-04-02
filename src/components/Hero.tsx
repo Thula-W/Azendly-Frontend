@@ -24,7 +24,7 @@ export default function Hero() {
               onClick={() => scrollToWaitlist()}
               className="gradient-border px-10 py-5 rounded-full text-xl font-bold hover:scale-105 transition-transform shadow-lg shadow-cyan-500/20"
             >
-              JOIN THE WAITLIST
+              GET EARLY ACCESS
             </button>
             <p className="text-sm text-gray-500 font-medium animate-pulse">
               Takes only 10 seconds
