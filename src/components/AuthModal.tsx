@@ -1,14 +1,27 @@
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Mail, Lock, User, Github, Chrome } from 'lucide-react';
+import { X, Mail, Lock, User, Linkedin, Chrome } from 'lucide-react';
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   mode: 'login' | 'signup';
   setMode: (mode: 'login' | 'signup') => void;
+  onLogin: () => void;
 }
 
-export default function AuthModal({ isOpen, onClose, mode, setMode }: AuthModalProps) {
+export default function AuthModal({ isOpen, onClose, mode, setMode, onLogin }: AuthModalProps) {
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    setLoading(false);
+    onLogin();
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -50,8 +63,8 @@ export default function AuthModal({ isOpen, onClose, mode, setMode }: AuthModalP
                   Google
                 </button>
                 <button className="w-full py-2.5 px-4 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center gap-2 hover:bg-white/10 transition-all font-bold text-[10px] uppercase tracking-widest">
-                  <Github className="w-3.5 h-3.5 text-purple-400" />
-                  GitHub
+                  <Linkedin className="w-3.5 h-3.5 text-[#0077B5]" />
+                  LinkedIn
                 </button>
               </div>
 
@@ -64,7 +77,7 @@ export default function AuthModal({ isOpen, onClose, mode, setMode }: AuthModalP
                 </div>
               </div>
 
-              <form className="space-y-3 w-full" onSubmit={(e) => e.preventDefault()}>
+              <form className="space-y-3 w-full" onSubmit={handleSubmit}>
                 {mode === 'signup' && (
                   <div className="relative">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 w-3.5 h-3.5" />
@@ -102,7 +115,11 @@ export default function AuthModal({ isOpen, onClose, mode, setMode }: AuthModalP
                   </div>
                 )}
 
-                <button className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-500 to-cyan-500 text-white font-black uppercase tracking-widest hover:scale-[1.02] transition-all shadow-xl shadow-cyan-500/10 mt-2 text-xs">
+                <button 
+                  disabled={loading}
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-500 to-cyan-500 text-white font-black uppercase tracking-widest hover:scale-[1.02] transition-all shadow-xl shadow-cyan-500/10 mt-2 text-xs flex items-center justify-center gap-2"
+                >
+                  {loading && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
                   {mode === 'login' ? 'Sign In' : 'Create Account'}
                 </button>
               </form>

@@ -1,9 +1,5 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import { useState, useEffect, FormEvent } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { FORM_STEPS } from './constants';
 import Background from './components/Background';
 import Navbar from './components/Navbar';
@@ -16,33 +12,24 @@ import Waitlist from './components/Waitlist';
 import FoundersVision from './components/FoundersVision';
 import AuthModal from './components/AuthModal';
 import Footer from './components/Footer';
-import { verifyWaitlistToken } from './lib/verifyWaitlist';
-import { scrollToWaitlist } from './lib/scrollToWaitlist';
+import Dashboard from './components/Dashboard/JobDashboard';
 
-function shouldVerifyFromEmailLink(): boolean {
-  if (typeof window === 'undefined') return false;
-  const p = new URLSearchParams(window.location.search);
-  return p.get('waitlist_verify') === '1' && !!p.get('token');
-}
-
-export default function App() {
+function AppContent() {
+  const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(localStorage.getItem('isLoggedIn') === 'true');
   const [authModal, setAuthModal] = useState<{ isOpen: boolean; mode: 'login' | 'signup' }>({
     isOpen: false,
     mode: 'login'
   });
-  const [formStep, setFormStep] = useState(-1); // -1 for Name/Email step
+  const [formStep, setFormStep] = useState(-1);
   const [userData, setUserData] = useState({ name: '', email: '' });
   const [formAnswers, setFormAnswers] = useState<any[]>([]);
   const [isJoined, setIsJoined] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isJoiningWaitlist, setIsJoiningWaitlist] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [verificationPending, setVerificationPending] = useState(false);
-  const [joinError, setJoinError] = useState<string | null>(null);
-  const [isVerifyingFromLink, setIsVerifyingFromLink] = useState(shouldVerifyFromEmailLink);
-  const [verifyLinkError, setVerifyLinkError] = useState<string | null>(null);
+
+  const [isDashboardModalOpen, setIsDashboardModalOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -50,100 +37,25 @@ export default function App() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Email links: same scroll as “JOIN THE WAITLIST”; one delayed pass after paint in case layout isn’t ready yet.
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const hasVerifyParams = params.get('waitlist_verify') === '1' && !!params.get('token');
-    const hasWaitlistHash = window.location.hash === '#early-access';
-    if (!hasVerifyParams && !hasWaitlistHash) return;
-
-    scrollToWaitlist();
-    const t = window.setTimeout(scrollToWaitlist, 200);
-    return () => window.clearTimeout(t);
-  }, []);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get('token');
-    if (params.get('waitlist_verify') !== '1' || !token) return;
-
-    let cancelled = false;
-
-    (async () => {
-      const result = await verifyWaitlistToken(token);
-      if (cancelled) return;
-
-      const stripVerifyParams = () => {
-        params.delete('waitlist_verify');
-        params.delete('token');
-        const rest = params.toString();
-        window.history.replaceState(
-          {},
-          '',
-          `${window.location.pathname}${rest ? `?${rest}` : ''}${window.location.hash}`
-        );
-      };
-
-      if (result.ok === false) {
-        setVerifyLinkError(result.error);
-        setIsVerifyingFromLink(false);
-        stripVerifyParams();
-        requestAnimationFrame(() => scrollToWaitlist());
-        return;
-      }
-
-      setUserData((prev) => ({ ...prev, email: result.email }));
-      setIsJoined(true);
-      setFormStep(0);
-      setVerificationPending(false);
-      setIsVerifyingFromLink(false);
-      stripVerifyParams();
-      requestAnimationFrame(() => scrollToWaitlist());
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const handleJoinWaitlist = async (e: FormEvent) => {
-    e.preventDefault();
-    setIsJoiningWaitlist(true);
-    setJoinError(null);
-    setVerifyLinkError(null);
-    try {
-      const anonKey = (import.meta as ImportMeta & { env: Record<string, string> }).env.VITE_SUPABASE_ANON_KEY;
-      const res = await fetch(
-        "https://swdrghckoedbyhtjttrv.supabase.co/functions/v1/join-waitlist",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            // "apikey": anonKey,
-            // "Authorization": `Bearer ${anonKey}`
-          },
-          body: JSON.stringify(userData)
-        }
-      );
-
-      const data = await res.json().catch(() => ({}));
-
-      if (res.ok) {
-        setVerificationPending(true);
-        return;
-      }
-
-      setJoinError(typeof data.error === 'string' ? data.error : 'Could not join the waitlist. Try again.');
-    } finally {
-      setIsJoiningWaitlist(false);
-    }
+  const handleLogin = () => {
+    setIsAuthenticated(true);
+    localStorage.setItem('isLoggedIn', 'true');
+    setAuthModal({ ...authModal, isOpen: false });
+    navigate('/dashboard');
   };
 
-  const handleRetryVerification = () => {
-    setVerificationPending(false);
-    setJoinError(null);
-    setVerifyLinkError(null);
-    setUserData({ name: '', email: '' });
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem('isLoggedIn');
+    navigate('/');
+  };
+
+  const handleJoinWaitlist = (e: FormEvent) => {
+    e.preventDefault();
+    if (userData.name && userData.email) {
+      setIsJoined(true);
+      setFormStep(0);
+    }
   };
 
   const handleOptionSelect = (option: string) => {
@@ -167,37 +79,9 @@ export default function App() {
     setFormAnswers(newAnswers);
   };
 
-  const handleNextStep = () => {
-    if (formStep < FORM_STEPS.length - 1) {
-      setFormStep(formStep + 1);
-    }
-  };
-
-  const handleSubmitFeedback = async () => {
-    setIsLoading(true)
-    const anonKey = (import.meta as ImportMeta & { env: Record<string, string> }).env.VITE_SUPABASE_ANON_KEY;
-
-    try {
-      await fetch(
-        "https://swdrghckoedbyhtjttrv.supabase.co/functions/v1/submit-answers",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            // "apikey": anonKey,
-            // "Authorization": `Bearer ${anonKey}`
-          },
-          body: JSON.stringify({
-            email: userData.email,
-            answers: formAnswers
-          })
-        }
-      );
-    } catch (error) {
-      console.error('Failed to submit feedback answers', error);
-    } finally {
-      setIsSubmitted(true);
-    }
+  const handleSubmitFeedback = (e: FormEvent) => {
+    e.preventDefault();
+    setIsSubmitted(true);
   };
 
   return (
@@ -208,34 +92,41 @@ export default function App() {
         mobileMenuOpen={mobileMenuOpen} 
         setMobileMenuOpen={setMobileMenuOpen} 
         openAuth={(mode) => setAuthModal({ isOpen: true, mode })}
+        isAuthenticated={isAuthenticated}
+        onLogout={handleLogout}
+        onBillingClick={() => navigate('/dashboard?view=billing')}
+        isModalOpen={authModal.isOpen || isDashboardModalOpen}
       />
 
       <main className="relative z-10">
-        <Hero />
-        <Problem />
-        <Solution />
-        <HowItWorks />
-        {/*<Pricing openAuth={(mode) => setAuthModal({ isOpen: true, mode })} /> */}
-        <Waitlist 
-          formStep={formStep}
-          userData={userData}
-          setUserData={setUserData}
-          formAnswers={formAnswers}
-          isJoined={isJoined}
-          isSubmitted={isSubmitted}
-          isLoading= {isLoading}
-          isJoiningWaitlist={isJoiningWaitlist}
-          verificationPending={verificationPending}
-          isVerifyingFromLink={isVerifyingFromLink}
-          verifyLinkError={verifyLinkError}
-          joinError={joinError}
-          handleJoinWaitlist={handleJoinWaitlist}
-          handleRetryVerification={handleRetryVerification}
-          handleOptionSelect={handleOptionSelect}
-          handleSubmitFeedback={handleSubmitFeedback}
-          setIsSubmitted={setIsSubmitted}
-        />
-        <FoundersVision />
+        <Routes>
+          <Route path="/" element={
+            <>
+              <Hero />
+              <Problem />
+              <Solution />
+              <HowItWorks />
+              <Pricing openAuth={(mode) => setAuthModal({ isOpen: true, mode })} />
+              <Waitlist 
+                formStep={formStep}
+                userData={userData}
+                setUserData={setUserData}
+                formAnswers={formAnswers}
+                isJoined={isJoined}
+                isSubmitted={isSubmitted}
+                handleJoinWaitlist={handleJoinWaitlist}
+                handleOptionSelect={handleOptionSelect}
+                handleSubmitFeedback={handleSubmitFeedback}
+                setIsSubmitted={setIsSubmitted}
+              />
+              <FoundersVision />
+            </>
+          } />
+          <Route 
+            path="/dashboard" 
+            element={isAuthenticated ? <Dashboard onModalToggle={setIsDashboardModalOpen} /> : <Navigate to="/" />} 
+          />
+        </Routes>
       </main>
 
       <AuthModal 
@@ -243,10 +134,20 @@ export default function App() {
         onClose={() => setAuthModal({ ...authModal, isOpen: false })}
         mode={authModal.mode}
         setMode={(mode) => setAuthModal({ ...authModal, mode })}
+        onLogin={handleLogin}
       />
 
       <Footer />
     </div>
   );
 }
+
+export default function App() {
+  return (
+    <Router>
+      <AppContent />
+    </Router>
+  );
+}
+
 

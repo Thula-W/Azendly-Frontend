@@ -2,9 +2,10 @@ export const NAV_LINKS = [
   { name: 'Why Azendly', href: '#problem' },
   { name: 'Features', href: '#solution' },
   { name: 'How it Works', href: '#how-it-works' },
-  { name: 'Get Early Access', href: '#early-access', highlight: true },
-  // { name: 'Get Started', href: '#signup', highlight: true },
-  // { name: 'Login', href: '#login' },
+  { name: 'Pricing', href: '#pricing' },
+  // { name: 'Get Early Access', href: '#early-access', highlight: true },
+  { name: 'Get Started', href: '#signup', highlight: true },
+  { name: 'Login', href: '#login' },
 ];
 
 export const FORM_STEPS = [

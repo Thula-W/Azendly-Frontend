@@ -1,0 +1,290 @@
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { 
+  ArrowLeft, 
+  Search, 
+  Download, 
+  FileText, 
+  Star, 
+  ExternalLink,
+  ChevronRight,
+  ChevronDown,
+  Info,
+  CheckCircle2,
+  XCircle,
+  Briefcase,
+  AlertCircle,
+  BarChart3
+} from 'lucide-react';
+import { Job, Resume } from '../../types';
+import { apiService } from '../../services/api';
+
+interface JobDetailViewProps {
+  job: Job;
+  onBack: () => void;
+}
+
+export default function JobDetailView({ job, onBack }: JobDetailViewProps) {
+  const [resumes, setResumes] = useState<Resume[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    const fetchResumes = async () => {
+      setLoading(true);
+      try {
+        const data = await apiService.getResumes(job.id);
+        const sorted = data.sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0));
+        setResumes(sorted);
+      } catch (error) {
+        console.error('Error fetching resumes:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchResumes();
+  }, [job.id]);
+
+  const filteredResumes = resumes.filter(r => 
+    r.fileName.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const selectedResume = resumes.find(r => r.id === selectedResumeId);
+
+  return (
+    <div className="min-h-screen bg-[#0D0D0F] pt-24 pb-12">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+          <div className="flex-grow">
+            <button 
+              onClick={onBack}
+              className="flex items-center gap-2 text-gray-500 hover:text-white transition-colors mb-6 group"
+            >
+              <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+              Back to Dashboard
+            </button>
+            <div className="flex items-center gap-4 mb-3">
+              <div className="p-3 rounded-2xl bg-cyan-500/10 text-cyan-400">
+                <Briefcase size={24} />
+              </div>
+              <h1 className="text-3xl md:text-4xl font-black text-white">{job.title}</h1>
+            </div>
+            <p className="text-gray-400 max-w-3xl line-clamp-2">{job.overview}</p>
+          </div>
+          
+          <div className="flex items-center gap-3">
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column: Job Context */}
+          <div className="lg:col-span-1 space-y-6">
+            <div className="p-6 rounded-[2rem] bg-white/5 border border-white/10">
+              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-white mb-4">Job Specs</h3>
+              <div className="space-y-4">
+                <SpecItem label="Expected Experience" value={job.expectedExperience} />
+                <SpecItem label="Ideal Candidate" value={job.candidateOverview} />
+                {job.signals && (
+                  <div className="pt-4 border-t border-white/5">
+                    <div className="text-[10px] font-black text-purple-400 uppercase tracking-[0.2em] mb-2">Priority Signals</div>
+                    <div className="text-sm text-gray-400 italic">"{job.signals}"</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Candidates List */}
+          <div className="lg:col-span-2 space-y-6">
+            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+              <div className="relative w-full md:max-w-sm">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+                <input 
+                  type="text" 
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Search candidates..."
+                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-11 pr-4 text-sm text-white placeholder:text-gray-600 focus:border-cyan-500/50 transition-all"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button className="px-6 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold flex items-center justify-center gap-2 hover:bg-white/10 transition-all text-sm">
+                  <Download size={18} />
+                  Download All
+                </button>
+                <button className="px-6 py-3 bg-cyan-500/10 border border-cyan-500/20 rounded-xl text-cyan-400 font-bold flex items-center justify-center gap-2 hover:bg-cyan-500/20 transition-all text-sm">
+                  <BarChart3 size={18} />
+                  Generate Report
+                </button>
+              </div>
+            </div>
+
+            {loading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="h-20 rounded-2xl bg-white/5 border border-white/10 animate-pulse" />
+                ))}
+              </div>
+            ) : filteredResumes.length === 0 ? (
+              <div className="py-24 text-center bg-white/5 rounded-[2rem] border border-dashed border-white/10">
+                <p className="text-gray-500">No candidates found for this search.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {filteredResumes.map((resume, idx) => (
+                  <motion.div 
+                    key={resume.id}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: idx * 0.05 }}
+                    className={`
+                      group relative overflow-hidden rounded-2xl transition-all cursor-pointer border
+                      ${selectedResumeId === resume.id 
+                        ? 'bg-gradient-to-r from-purple-500/10 to-cyan-500/10 border-cyan-500/30' 
+                        : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/20'}
+                    `}
+                    onClick={() => setSelectedResumeId(selectedResumeId === resume.id ? null : resume.id)}
+                  >
+                    <div className="p-5 flex items-center gap-6">
+                      <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center font-black text-xl shadow-lg transition-transform group-hover:scale-110 ${
+                        idx === 0 ? 'bg-gradient-to-br from-yellow-300 to-yellow-600 text-[#0D0D0F] shadow-yellow-500/20' :
+                        idx === 1 ? 'bg-gradient-to-br from-gray-200 to-gray-500 text-[#0D0D0F] shadow-white/10' :
+                        idx === 2 ? 'bg-gradient-to-br from-orange-400 to-orange-700 text-[#0D0D0F] shadow-orange-500/20' :
+                        'bg-black/40 text-white/50'
+                      }`}>
+                        {idx + 1}
+                      </div>
+                      
+                      <div className="flex-grow min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-bold text-white truncate">{resume.fileName}</h4>
+                          {idx === 0 && (
+                            <span className="px-2 py-0.5 bg-yellow-400/10 text-yellow-500 rounded text-[8px] font-black uppercase tracking-widest">Top Pick</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-4 text-[10px] text-gray-500 uppercase tracking-widest font-black">
+                          <span className="flex items-center gap-1">
+                            {resume.phone || 'N/A'}
+                          </span>
+                          <span>•</span>
+                          <a 
+                            href={`mailto:${resume.email}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-cyan-400 hover:underline lowercase"
+                          >
+                            {resume.email || 'N/A'}
+                          </a>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-4">
+                        <div className="hidden md:flex flex-col items-end">
+                          <div className="text-xs font-black text-white">{resume.matchPercentage || 0}% MATCH</div>
+                          <div className="w-16 h-1 bg-white/10 rounded-full overflow-hidden mt-1">
+                            <motion.div 
+                              initial={{ width: 0 }}
+                              animate={{ width: `${resume.matchPercentage || 0}%` }}
+                              className="h-full bg-gradient-to-r from-purple-500 to-cyan-500"
+                            />
+                          </div>
+                        </div>
+                        <ChevronRight className={`text-gray-600 transition-transform ${selectedResumeId === resume.id ? 'rotate-90' : ''}`} />
+                      </div>
+                    </div>
+
+                    {/* Detailed Breakdown */}
+                    <AnimatePresence>
+                      {selectedResumeId === resume.id && (
+                        <motion.div 
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="px-5 pb-6 pt-2 border-t border-white/5"
+                        >
+                          <div className="p-6 rounded-2xl bg-black/40 space-y-6">
+                            <div>
+                              <h5 className="text-[10px] font-black text-cyan-400 uppercase tracking-[0.2em] mb-3">AI Synthesis</h5>
+                              <p className="text-sm text-gray-300 leading-relaxed">
+                                {resume.summary || "AI analysis in progress for this candidate..."}
+                              </p>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                              <div>
+                                <h5 className="text-[10px] font-black text-green-400 uppercase tracking-[0.2em] mb-3">Strengths</h5>
+                                <ul className="space-y-2">
+                                  <StrengthItem text="Exceeds technical depth in required cloud stack" />
+                                  <StrengthItem text="Proven track record in high-growth startups" />
+                                  <StrengthItem text="Matches all hard constraints perfectly" />
+                                </ul>
+                              </div>
+                              <div>
+                                <h5 className="text-[10px] font-black text-red-400 uppercase tracking-[0.2em] mb-3">Potential Risks</h5>
+                                <ul className="space-y-2">
+                                  <RiskItem text="Short tenure in most recent role (11 months)" />
+                                  <RiskItem text="Limited experience with specific legacy tools mentioned" />
+                                </ul>
+                              </div>
+                            </div>
+
+                            <div className="pt-4 flex gap-3">
+                              <button className="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all flex items-center justify-center gap-2">
+                                <FileText size={14} />
+                                View Full Resume
+                              </button>
+                              <button className="flex-1 py-3 rounded-xl bg-cyan-500 text-black text-[10px] font-black uppercase tracking-widest hover:bg-cyan-400 transition-all flex items-center justify-center gap-2 shadow-xl shadow-cyan-500/10">
+                                <Download size={14} />
+                                Download
+                              </button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SpecItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <div className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-1">{label}</div>
+      <div className="text-sm text-gray-300">{value}</div>
+    </div>
+  );
+}
+
+function ConstraintBox({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="bg-white/5 rounded-xl p-3 border border-white/5">
+      <div className="text-[8px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-1">{label}</div>
+      <div className="text-xs font-bold text-white truncate">{value}</div>
+    </div>
+  );
+}
+
+function StrengthItem({ text }: { text: string }) {
+  return (
+    <li className="flex items-start gap-2 text-xs text-gray-400">
+      <CheckCircle2 size={14} className="text-green-500 mt-0.5 flex-shrink-0" />
+      <span>{text}</span>
+    </li>
+  );
+}
+
+function RiskItem({ text }: { text: string }) {
+  return (
+    <li className="flex items-start gap-2 text-xs text-gray-400">
+      <AlertCircle size={14} className="text-red-500 mt-0.5 flex-shrink-0" />
+      <span>{text}</span>
+    </li>
+  );
+}
