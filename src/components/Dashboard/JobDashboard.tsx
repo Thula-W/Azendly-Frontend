@@ -6,19 +6,9 @@ import {
   Upload, 
   BarChart3, 
   Trash2, 
-  Search, 
   Briefcase, 
-  Users, 
-  Clock,
-  ChevronRight,
   Eye,
-  FileText,
-  CreditCard,
-  ArrowLeft,
-  Check,
-  Zap,
-  Star,
-  X
+  FileText
 } from 'lucide-react';
 import { Job } from '../../types';
 import { apiService } from '../../services/api';
@@ -33,21 +23,21 @@ interface DashboardProps {
 
 export default function Dashboard({ onModalToggle }: DashboardProps) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [jobs, setJobs] = useState<Job[]>([]);
+  const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [credits, setCredits] = useState<number | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'upload' | 'view'>('list');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-  const [currentPlan, setCurrentPlan] = useState<'Starter' | 'Pro' | 'Enterprise'>('Starter');
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
   const userId = 'user_123';
   
   useEffect(() => {
     const view = searchParams.get('view');
     if (view === 'billing') {
-      setViewMode('list'); // Reset internal view mode when billing is open
+      setViewMode('list'); 
     }
   }, [searchParams]);
 
@@ -71,19 +61,26 @@ export default function Dashboard({ onModalToggle }: DashboardProps) {
     }
   };
 
+  // Single source of mount/initialization fetch execution
   useEffect(() => {
     fetchJobs();
   }, []);
 
   const handleDelete = async (id: string) => {
-    await apiService.deleteJob(id);
-    setJobs(jobs.filter(j => j.id !== id));
-    setDeleteConfirm(null);
+    setIsDeleting(id);
+    try {
+      await apiService.deleteJob(id);
+      setJobs(prevJobs => (Array.isArray(prevJobs) ? prevJobs.filter(j => j.id !== id) : []));
+      setDeleteConfirm(null);
+    } catch (error) {
+      console.error('Error deleting job:', error);
+    } finally {
+      setIsDeleting(null);
+    }
   };
 
   const handleRank = async (jobId: string) => {
     try {
-      // Optimistic UI or just wait for mock delay
       await apiService.rankJob(jobId);
       await fetchJobs();
       setSelectedJobId(jobId);
@@ -98,7 +95,7 @@ export default function Dashboard({ onModalToggle }: DashboardProps) {
     setIsAddModalOpen(false);
   };
 
-  const selectedJob = jobs.find(j => j.id === selectedJobId);
+  const selectedJob = jobs.find(j => j.id === selectedJobId) || null;
 
   if (viewMode === 'upload' && selectedJob) {
     return (
@@ -156,10 +153,9 @@ export default function Dashboard({ onModalToggle }: DashboardProps) {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="h-64 rounded-3xl bg-white/5 border border-white/10 animate-pulse" />
-            ))}
+          <div className="flex flex-col items-center justify-center py-40">
+            <div className="w-12 h-12 border-4 border-cyan-500/20 border-t-cyan-500 rounded-full animate-spin shadow-lg shadow-cyan-500/10" />
+            <p className="text-gray-400 text-sm mt-4 font-medium tracking-wide">Loading jobs...</p>
           </div>
         ) : jobs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 px-6 rounded-[2.5rem] bg-white/5 border border-dashed border-white/10">
@@ -179,87 +175,90 @@ export default function Dashboard({ onModalToggle }: DashboardProps) {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {jobs.map((job) => (
-              <motion.div
-                layout
-                key={job.id}
-                className="p-1 rounded-[2.5rem] bg-gradient-to-br from-white/10 to-white/5 hover:from-purple-500/20 hover:to-cyan-500/20 transition-all group border border-white/10"
-              >
-                <div className="bg-[#0D0D0F] rounded-[calc(2.5rem-4px)] p-6 h-full flex flex-col">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="p-3 rounded-2xl bg-white/5 text-cyan-400">
-                      <Briefcase size={20} />
+            {jobs.map((job) => {
+              const isRanked = job.status === 'RANKED';
+
+              return (
+                <motion.div
+                  layout
+                  key={job.id}
+                  className="p-1 rounded-[2.5rem] bg-gradient-to-br from-white/10 to-white/5 hover:from-purple-500/20 hover:to-cyan-500/20 transition-all group border border-white/10"
+                >
+                  <div className="bg-[#0D0D0F] rounded-[calc(2.5rem-4px)] p-6 h-full flex flex-col">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="p-3 rounded-2xl bg-white/5 text-cyan-400">
+                        <Briefcase size={20} />
+                      </div>
+                      <button 
+                        onClick={() => setDeleteConfirm(job.id)}
+                        className="p-2 text-gray-500 hover:text-red-400 transition-colors"
+                      >
+                        <Trash2 size={18} />
+                      </button>
                     </div>
-                    <button 
-                      onClick={() => setDeleteConfirm(job.id)}
-                      className="p-2 text-gray-500 hover:text-red-400 transition-colors"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
 
-                  <h3 className="text-xl font-bold text-white mb-2 line-clamp-1">{job.title}</h3>
-                  <div className="text-gray-400 text-sm mb-6 line-clamp-2 h-10 flex-grow">
-                    {job.overview}
-                  </div>
+                    <h3 className="text-xl font-bold text-white mb-2 line-clamp-1">{job.title}</h3>
+                    <div className="text-gray-400 text-sm mb-6 line-clamp-2 h-10 flex-grow">
+                      {job.overview}
+                    </div>
 
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div className="bg-white/5 rounded-2xl p-3 border border-white/5">
-                      <div className="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Resumes</div>
-                      <div className="text-xl font-black text-white flex items-center gap-2">
-                        <FileText size={16} className="text-purple-400" />
-                        {job.resumeCount}
+                    <div className="grid grid-cols-2 gap-4 mb-6">
+                      <div className="bg-white/5 rounded-2xl p-3 border border-white/5">
+                        <div className="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Resumes</div>
+                        <div className="text-xl font-black text-white flex items-center gap-2">
+                          <FileText size={16} className="text-purple-400" />
+                          {job.totalResumes}
+                        </div>
+                      </div>
+                      <div className="bg-white/5 rounded-2xl p-3 border border-white/5">
+                        <div className="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Status</div>
+                        <div className="text-sm font-bold text-cyan-400 flex items-center gap-1.5 leading-none">
+                          <div className={`w-1.5 h-1.5 rounded-full ${isRanked ? 'bg-cyan-400' : 'bg-green-400 animate-pulse'}`} />
+                          {isRanked ? 'Ranked' : 'Active'}
+                        </div>
                       </div>
                     </div>
-                    <div className="bg-white/5 rounded-2xl p-3 border border-white/5">
-                      <div className="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Status</div>
-                      <div className="text-sm font-bold text-cyan-400 flex items-center gap-1.5 leading-none">
-                        <div className={`w-1.5 h-1.5 rounded-full ${job.isRanking || job.status === 'archived' ? 'bg-cyan-400' : 'bg-green-400 animate-pulse'}`} />
-                        {job.isRanking ? 'Ranked' : job.status === 'archived' ? 'Archived' : 'Active'}
-                      </div>
-                    </div>
-                  </div>
 
-                  <div className="flex gap-3">
-                    {!job.isRanking && (
+                    <div className="flex gap-3">
+                      {!isRanked && (
+                        <button 
+                          onClick={() => {
+                            setSelectedJobId(job.id);
+                            setViewMode('upload');
+                          }}
+                          className="flex-1 py-3 px-4 rounded-xl bg-green-400 border border-white/10 text-white text-xs font-bold flex items-center justify-center gap-2 hover:bg-green-400 shadow-green-500/20 transition-all uppercase tracking-widest"
+                        >
+                          <Upload size={14} />
+                          Upload
+                        </button>
+                      )}
                       <button 
                         onClick={() => {
-                          setSelectedJobId(job.id);
-                          setViewMode('upload');
+                          if (isRanked) {
+                            setSelectedJobId(job.id);
+                            setViewMode('view');
+                          } else if (job.totalResumes > 0) {
+                            handleRank(job.id);
+                          }
                         }}
-                        className="flex-1 py-3 px-4 rounded-xl bg-white/5 border border-white/10 text-white text-xs font-bold flex items-center justify-center gap-2 hover:bg-white/10 transition-all uppercase tracking-widest"
+                        disabled={!isRanked && job.totalResumes === 0}
+                        className={`flex-1 py-3 px-4 rounded-xl text-black text-xs font-black flex items-center justify-center gap-2 transition-all uppercase tracking-widest shadow-lg ${
+                          isRanked || job.totalResumes > 0 
+                            ? 'bg-cyan-500 hover:bg-cyan-400 shadow-cyan-500/20' 
+                            : 'bg-white/10 text-gray-500 cursor-not-allowed shadow-none'
+                        }`}
                       >
-                        <Upload size={14} />
-                        Upload
+                        {isRanked ? <Eye size={14} /> : <BarChart3 size={14} />}
+                        {isRanked ? 'View Results' : 'Rank'}
                       </button>
-                    )}
-                    <button 
-                      onClick={() => {
-                        if (job.isRanking) {
-                          setSelectedJobId(job.id);
-                          setViewMode('view');
-                        } else if (job.resumeCount > 0) {
-                          handleRank(job.id);
-                        }
-                      }}
-                      disabled={!job.isRanking && job.resumeCount === 0}
-                      className={`flex-1 py-3 px-4 rounded-xl text-black text-xs font-black flex items-center justify-center gap-2 transition-all uppercase tracking-widest shadow-lg ${
-                        job.isRanking || job.resumeCount > 0 
-                          ? 'bg-cyan-500 hover:bg-cyan-400 shadow-cyan-500/20' 
-                          : 'bg-white/10 text-gray-500 cursor-not-allowed shadow-none'
-                      }`}
-                    >
-                      {job.isRanking ? <Eye size={14} /> : <BarChart3 size={14} />}
-                      {job.isRanking ? 'View Results' : 'Rank'}
-                    </button>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              );
+            })}
           </div>
         )}
       </div>
-
 
       <AnimatePresence>
         {isAddModalOpen && (
@@ -303,10 +302,24 @@ export default function Dashboard({ onModalToggle }: DashboardProps) {
                   </button>
                   <button 
                     onClick={() => deleteConfirm && handleDelete(deleteConfirm)}
+                    disabled={!!isDeleting}
+                    className="flex-1 py-3 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition-all flex items-center justify-center gap-2 disabled:bg-red-500/50 disabled:cursor-not-allowed"
+                  >
+                    {isDeleting ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                        <span>Deleting...</span>
+                      </>
+                    ) : (
+                      <span>Yes, Delete</span>
+                    )}
+                  </button>
+                  {/* <button 
+                    onClick={() => deleteConfirm && handleDelete(deleteConfirm)}
                     className="flex-1 py-3 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition-all"
                   >
                     Yes, Delete
-                  </button>
+                  </button> */}
                 </div>
               </div>
             </motion.div>

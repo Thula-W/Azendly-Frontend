@@ -1,115 +1,206 @@
 import { Job, Resume } from '../types';
 
-// Mock API Service using localStorage
-const JOBS_KEY = 'azendly_jobs';
+// ─── Config ──────────────────────────────────────────────────────────────────
+
+const API_BASE =  '';
+
+// Provide / replace this with however you obtain the Firebase ID token
+async function getAuthToken(): Promise<string> {
+  // e.g. from Firebase Auth:
+  // const { getAuth } = await import('firebase/auth');
+  // return (await getAuth().currentUser?.getIdToken()) ?? '';
+  // throw new Error('getAuthToken() is not implemented');
+  return  'eyJhbGciOiJFUzI1NiIsImtpZCI6IjI1ZmJkNmM2LTZhNWYtNDljZS05YzY2LTEwNGU2YzcxNjEzMSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3BjbHhpeGR0ZGZlbHFwaWtkYXJ4LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI2NjY4NDJkMC1iMzcxLTQ3MWEtYWM0Mi04NDA2ODdiYjYwODMiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc5MDA1NzIzLCJpYXQiOjE3NzkwMDIxMjMsImVtYWlsIjoidGVzdEBlbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsX3ZlcmlmaWVkIjp0cnVlfSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3OTAwMjEyM31dLCJzZXNzaW9uX2lkIjoiZDFhYTQwZTQtZTkzZC00ZmZjLWIxYWYtMjJkZTZiOWIyNWQwIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.SzjsjrQr8-RmAliI7iYSU7iyMN8rbToSjTIoRKe4_o4cBj7Dv2f3RYPKaAYp382ke7uE_xyqhCmsC7SjmJva6g'
+}
+
+async function authHeaders(): Promise<HeadersInit> {
+  const token = await getAuthToken();
+  return {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`,
+  };
+}
+
+async function apiFetch<T>(
+  path: string,
+  options: RequestInit = {},
+): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, options);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body?.error ?? body?.message ?? `Request failed: ${res.status}`);
+  }
+  return res.json() as Promise<T>;
+}
+
+// ─── Mock helpers (for endpoints not yet implemented in backend) ──────────────
+
+const JOBS_KEY    = 'azendly_jobs';
 const RESUMES_KEY = 'azendly_resumes';
 const CREDITS_KEY = 'azendly_credits';
 const INITIAL_CREDITS = 500;
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+// ─── API Service ─────────────────────────────────────────────────────────────
+
 export const apiService = {
-  // Jobs
-  async getJobs(userId: string): Promise<Job[]> {
-    await delay(500);
-    const jobs = localStorage.getItem(JOBS_KEY);
-    return jobs ? JSON.parse(jobs).filter((j: Job) => j.userId === userId) : [];
+
+  // ── Users ─────────────────────────────────────────────────────────────────
+
+  /**
+   * GET /api/users
+   * Returns the current authenticated user (and credits).
+   */
+  async getMe() {
+    return apiFetch<{ id: string; email: string; credits: number; [key: string]: unknown }>(
+      '/api/users',
+      { headers: await authHeaders() },
+    );
   },
 
-  async createJob(jobData: Omit<Job, 'id' | 'createdAt' | 'resumeCount'>): Promise<Job> {
-    await delay(800);
-    const jobs = JSON.parse(localStorage.getItem(JOBS_KEY) || '[]');
-    const newJob: Job = {
-      ...jobData,
-      id: Math.random().toString(36).substr(2, 9),
-      createdAt: Date.now(),
-      resumeCount: 0,
-      status: 'active'
-    };
-    jobs.push(newJob);
-    localStorage.setItem(JOBS_KEY, JSON.stringify(jobs));
-    return newJob;
-  },
+  // ── Credits ───────────────────────────────────────────────────────────────
 
-  async deleteJob(jobId: string): Promise<void> {
-    await delay(500);
-    let jobs = JSON.parse(localStorage.getItem(JOBS_KEY) || '[]');
-    jobs = jobs.filter((j: Job) => j.id !== jobId);
-    localStorage.setItem(JOBS_KEY, JSON.stringify(jobs));
-    
-    // Also delete resumes for this job
-    let resumes = JSON.parse(localStorage.getItem(RESUMES_KEY) || '[]');
-    resumes = resumes.filter((r: Resume) => r.jobId !== jobId);
-    localStorage.setItem(RESUMES_KEY, JSON.stringify(resumes));
-  },
-
-  // Resumes
-  async uploadResumes(jobId: string, files: File[]): Promise<Resume[]> {
-    await delay(1500);
-    const resumes = JSON.parse(localStorage.getItem(RESUMES_KEY) || '[]');
-    const newResumes: Resume[] = files.map(file => ({
-      id: Math.random().toString(36).substr(2, 9),
-      jobId,
-      fileName: file.name,
-      size: file.size,
-      uploadedAt: Date.now(),
-      email: `${file.name.split('.')[0].toLowerCase().replace(/\s+/g, '.')}@example.com`,
-      phone: `+1 (555) ${Math.floor(100 + Math.random() * 900)}-${Math.floor(1000 + Math.random() * 9000)}`
-    }));
-    
-    const updatedResumes = [...resumes, ...newResumes];
-    localStorage.setItem(RESUMES_KEY, JSON.stringify(updatedResumes));
-    
-    // Update job resume count
-    const jobs = JSON.parse(localStorage.getItem(JOBS_KEY) || '[]');
-    const jobIndex = jobs.findIndex((j: Job) => j.id === jobId);
-    if (jobIndex !== -1) {
-      jobs[jobIndex].resumeCount += files.length;
-      localStorage.setItem(JOBS_KEY, JSON.stringify(jobs));
-    }
-
-    // Deduct credits
-    const currentCredits = parseInt(localStorage.getItem(CREDITS_KEY) || INITIAL_CREDITS.toString());
-    localStorage.setItem(CREDITS_KEY, (currentCredits - files.length).toString());
-    
-    return newResumes;
-  },
-
+  /**
+   * Fetches credits from the real /api/users endpoint.
+   * Falls back to localStorage while the backend is being wired up.
+   */
   async getCredits(): Promise<number> {
-    await delay(300);
-    const credits = localStorage.getItem(CREDITS_KEY);
-    if (credits === null) {
-      localStorage.setItem(CREDITS_KEY, INITIAL_CREDITS.toString());
-      return INITIAL_CREDITS;
+    try {
+      const user = await apiService.getMe();
+      return user.credits ?? 0;
+    } catch {
+      // ── MOCK FALLBACK ──
+      await delay(300);
+      const credits = localStorage.getItem(CREDITS_KEY);
+      if (credits === null) {
+        localStorage.setItem(CREDITS_KEY, INITIAL_CREDITS.toString());
+        return INITIAL_CREDITS;
+      }
+      return parseInt(credits);
     }
-    return parseInt(credits);
   },
 
+  // ── Jobs ──────────────────────────────────────────────────────────────────
+
+  async getJobs(userId: string): Promise<any[]> {
+    const res = await apiFetch<any[]>('/api/users/jobs', {
+      method: 'GET',
+      headers: await authHeaders(),
+    });
+    return res;
+  },
+
+  /**
+   * POST /api/jobs
+   * Body: { title, overview, skills, bio, experience, constraints, signals }
+   */
+  async createJob(
+    jobData: Omit<Job, 'id' | 'createdAt' | 'resumeCount'>,
+  ): Promise<Job> {
+    console.log('Creating job with data:', jobData);
+    const { title, overview, skills, bio, experience, constraints, signals } = jobData as any;
+
+    return apiFetch<Job>('/api/jobs', {
+      method: 'POST',
+      headers: await authHeaders(),
+      body: JSON.stringify({ title, overview, skills, bio, experience, constraints, signals }),
+    });
+  },
+
+  /**
+   * POST /api/jobs/delete-job
+   * Body: { jobId }
+   */
+  async deleteJob(jobId: string): Promise<void> {
+    await apiFetch<void>('/api/jobs/delete-job', {
+      method: 'POST',
+      headers: await authHeaders(),
+      body: JSON.stringify({ jobId }),
+    });
+  },
+
+  /**
+   * POST /api/jobs/rerank-job
+   * Body: { jobId }
+   * Middleware: authenticate, checkJobStatus
+   */
+  async rankJob(jobId: string): Promise<void> {
+    await apiFetch<void>('/api/jobs/rerank-job', {
+      method: 'POST',
+      headers: await authHeaders(),
+      body: JSON.stringify({ jobId }),
+    });
+  },
+
+  // ── Resumes ───────────────────────────────────────────────────────────────
+
+  /**
+   * NOT YET IMPLEMENTED in backend — uses localStorage mock.
+   */
   async getResumes(jobId: string): Promise<Resume[]> {
+    // ── MOCK ──
     await delay(500);
     const resumes = JSON.parse(localStorage.getItem(RESUMES_KEY) || '[]');
     return resumes.filter((r: Resume) => r.jobId === jobId);
   },
 
-  async rankJob(jobId: string): Promise<void> {
-    await delay(2000); // Simulate ranking process
-    const jobs = JSON.parse(localStorage.getItem(JOBS_KEY) || '[]');
-    const jobIndex = jobs.findIndex((j: Job) => j.id === jobId);
-    if (jobIndex !== -1) {
-      jobs[jobIndex].isRanking = true;
-      localStorage.setItem(JOBS_KEY, JSON.stringify(jobs));
-    }
+  /**
+   * Two-step upload flow:
+   *
+   * Step 1 — POST /api/resumes/upload-intent
+   *   Body: { jobId, files: [{ name, size, type }, ...] }
+   *   Returns: presigned URLs or upload tokens for each file.
+   *
+   * Step 2 — Upload each file directly (e.g. to S3 / GCS) using the URLs
+   *   returned by the intent endpoint.
+   *
+   * Step 3 — POST /api/resumes/upload-confirm
+   *   Body: { jobId, resumes: [...confirmedFileRefs], triggerScoring?: boolean }
+   *   Returns: Resume[]
+   */
+  async uploadResumes(
+    jobId: string,
+    files: File[],
+    triggerScoring = false,
+  ): Promise<Resume[]> {
+    const headers = await authHeaders();
 
-    // Mock rankings for resumes
-    const resumes = JSON.parse(localStorage.getItem(RESUMES_KEY) || '[]');
-    resumes.forEach((r: Resume) => {
-      if (r.jobId === jobId) {
-        r.ranking = Math.floor(Math.random() * 10) + 1;
-        r.totalScore = Math.floor(Math.random() * 40) + 60;
-        r.matchPercentage = Math.floor(Math.random() * 30) + 70;
-        r.summary = "Strong candidate with relevant experience in cloud architecture and team leadership.";
-      }
+    // 1. Signal intent & get upload destinations
+    const intentPayload = {
+      jobId,
+      files: files.map(f => ({ name: f.name, size: f.size, type: f.type })),
+    };
+
+    const intentResponse = await apiFetch<{
+      uploads: Array<{ uploadUrl: string; fileKey: string; fileName: string }>;
+    }>('/api/resumes/upload-intent', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(intentPayload),
     });
-    localStorage.setItem(RESUMES_KEY, JSON.stringify(resumes));
-  }
+
+    // 2. Upload files directly to storage using the presigned URLs
+    await Promise.all(
+      intentResponse.uploads.map(({ uploadUrl }, idx) =>
+        fetch(uploadUrl, {
+          method: 'PUT',
+          body: files[idx],
+          headers: { 'Content-Type': files[idx].type },
+        }),
+      ),
+    );
+
+    // 3. Confirm uploads & (optionally) trigger scoring
+    const confirmedResumes = intentResponse.uploads.map(({ fileKey, fileName }) => ({
+      fileKey,
+      fileName,
+    }));
+
+    return apiFetch<Resume[]>('/api/resumes/upload-confirm', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ jobId, resumes: confirmedResumes, triggerScoring }),
+    });
+  },
 };

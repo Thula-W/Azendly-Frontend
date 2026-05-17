@@ -41,10 +41,10 @@ export default function AddJobModal({ isOpen, onClose, onJobCreated, userId }: A
       const job = await apiService.createJob({
         title: formData.title,
         overview: formData.overview,
-        expectedSkills: formData.expectedSkills,
-        expectedExperience: formData.expectedExperience,
-        candidateOverview: formData.candidateOverview,
-        hardConstraints: {
+        skills: formData.expectedSkills,
+        experience: formData.expectedExperience,
+        bio: formData.candidateOverview,
+        constraints: {
           educationLevel: formData.educationLevel,
           languages: formData.languages,
           yearsOfExperience: formData.yearsOfExperience
