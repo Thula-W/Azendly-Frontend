@@ -9,9 +9,9 @@ export interface Job {
   id: string;
   title: string;
   overview: string;
-  expectedSkills: string;
-  expectedExperience: string;
-  candidateOverview: string;
+  skillsText: string;
+  experienceText: string;
+  bioText: string;
   hardConstraints: HardConstraints;
   signals?: string;
   resumeCount: number;

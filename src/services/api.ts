@@ -10,10 +10,10 @@ async function getAuthToken(): Promise<string> {
   // const { getAuth } = await import('firebase/auth');
   // return (await getAuth().currentUser?.getIdToken()) ?? '';
   // throw new Error('getAuthToken() is not implemented');
-  return  'eyJhbGciOiJFUzI1NiIsImtpZCI6IjI1ZmJkNmM2LTZhNWYtNDljZS05YzY2LTEwNGU2YzcxNjEzMSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3BjbHhpeGR0ZGZlbHFwaWtkYXJ4LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI2NjY4NDJkMC1iMzcxLTQ3MWEtYWM0Mi04NDA2ODdiYjYwODMiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc5MDA1NzIzLCJpYXQiOjE3NzkwMDIxMjMsImVtYWlsIjoidGVzdEBlbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsX3ZlcmlmaWVkIjp0cnVlfSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3OTAwMjEyM31dLCJzZXNzaW9uX2lkIjoiZDFhYTQwZTQtZTkzZC00ZmZjLWIxYWYtMjJkZTZiOWIyNWQwIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.SzjsjrQr8-RmAliI7iYSU7iyMN8rbToSjTIoRKe4_o4cBj7Dv2f3RYPKaAYp382ke7uE_xyqhCmsC7SjmJva6g'
+  return 'eyJhbGciOiJFUzI1NiIsImtpZCI6IjI1ZmJkNmM2LTZhNWYtNDljZS05YzY2LTEwNGU2YzcxNjEzMSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3BjbHhpeGR0ZGZlbHFwaWtkYXJ4LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI2NjY4NDJkMC1iMzcxLTQ3MWEtYWM0Mi04NDA2ODdiYjYwODMiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc5MTAzODkwLCJpYXQiOjE3NzkxMDAyOTAsImVtYWlsIjoidGVzdEBlbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsX3ZlcmlmaWVkIjp0cnVlfSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3OTEwMDI5MH1dLCJzZXNzaW9uX2lkIjoiOWQ4OWQ1YTctMzJlNy00YmJhLTk0ZDAtYzU0MmQ5MTAwY2E2IiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.FQirQ6eYVQbRU9QmqHQbm09BXu-AgOyzGpHT3hsn26g6Npo20JUYkZL0Rlq8l3rimmFxMLq5beTtSCLyVGkgpA'
 }
 
-async function authHeaders(): Promise<HeadersInit> {
+  async function authHeaders(): Promise<HeadersInit> {
   const token = await getAuthToken();
   return {
     'Content-Type': 'application/json',
@@ -91,10 +91,6 @@ export const apiService = {
     return res;
   },
 
-  /**
-   * POST /api/jobs
-   * Body: { title, overview, skills, bio, experience, constraints, signals }
-   */
   async createJob(
     jobData: Omit<Job, 'id' | 'createdAt' | 'resumeCount'>,
   ): Promise<Job> {
@@ -108,10 +104,6 @@ export const apiService = {
     });
   },
 
-  /**
-   * POST /api/jobs/delete-job
-   * Body: { jobId }
-   */
   async deleteJob(jobId: string): Promise<void> {
     await apiFetch<void>('/api/jobs/delete-job', {
       method: 'POST',
@@ -134,15 +126,13 @@ export const apiService = {
   },
 
   // ── Resumes ───────────────────────────────────────────────────────────────
-
-  /**
-   * NOT YET IMPLEMENTED in backend — uses localStorage mock.
-   */
-  async getResumes(jobId: string): Promise<Resume[]> {
-    // ── MOCK ──
-    await delay(500);
-    const resumes = JSON.parse(localStorage.getItem(RESUMES_KEY) || '[]');
-    return resumes.filter((r: Resume) => r.jobId === jobId);
+  async getRankings(jobId: string): Promise<any[]> {
+    const res= await apiFetch<any[]>('/api/jobs/rankings', {
+      method: 'POST',
+      headers: await authHeaders(),
+      body: JSON.stringify({ jobId }),
+    });
+    return res;
   },
 
   /**
