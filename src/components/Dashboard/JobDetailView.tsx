@@ -11,6 +11,7 @@ import {
   BarChart3,
   Briefcase
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { Job } from '../../types';
 import { apiService } from '../../services/api';
 
@@ -24,6 +25,7 @@ export default function JobDetailView({ job, onBack }: JobDetailViewProps) {
   const [loading, setLoading] = useState(true);
   const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
 
   const fetchRankings = async () => {
     setLoading(true);
@@ -48,6 +50,74 @@ export default function JobDetailView({ job, onBack }: JobDetailViewProps) {
   const filteredResumes = rankings.filter(r => 
     (r.name || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handleGenerateReport = async () => {
+    if (!rankings || rankings.length === 0) return;
+    setIsGeneratingReport(true);
+    
+    try {
+      // 1. Map and parse the structured payload rows
+      const reportData = rankings.map((candidate, idx) => {
+      let parsedExplanation = { summary: '', strengths: [], weaknesses: [] };
+      
+      if (candidate.explanation) {
+        if (typeof candidate.explanation === 'string') {
+          try {
+            parsedExplanation = JSON.parse(candidate.explanation);
+          } catch (e) {
+            console.error("Failed parsing explanation string inside report:", e);
+          }
+        } else if (typeof candidate.explanation === 'object') {
+          parsedExplanation = candidate.explanation;
+        }
+      }
+
+      // Convert arrays of text items into single breathable string rows for Excel cells
+      const formatList = (arr: any) => Array.isArray(arr) ? arr.map(item => `• ${item}`).join('\n') : '';
+
+      return {
+        "Rank": idx + 1,
+        "Name": candidate.name,
+        "Azendly Score (%)": candidate.azendlyScore ?? 0,
+        "Email Address": candidate.email || 'N/A',
+        "Phone Number": candidate.phone || 'N/A',
+        "Summary": parsedExplanation.summary || '',
+        "Key Strengths": formatList(parsedExplanation.strengths),
+        "Potential Weaknesses / Risks": formatList(parsedExplanation.weaknesses),
+        "Location": candidate.location || 'N/A',
+      };
+    });
+
+    // 2. Convert mapped JSON dataset to a SheetJS Worksheet object
+    const worksheet = XLSX.utils.json_to_sheet(reportData);
+    
+    // 3. Configure cell design alignments (enables text wrap for long summaries & bullet points)
+    const totalCols = Object.keys(reportData[0] || {}).length;
+    worksheet['!cols'] = [
+      { wch: 6 },   // Rank
+      { wch: 25 },  // Candidate Name
+      { wch: 18 },  // Azendly Score
+      { wch: 25 },  // Email
+      { wch: 18 },  // Phone
+      { wch: 45 },  // AI Summary
+      { wch: 45 },  // Key Strengths
+      { wch: 45 },  // Potential Weaknesses
+      { wch: 15 },  // Location
+    ];
+
+    // 4. Create Workbook wrapper shell and append the sheet
+    const workbook = XLSX.utils.book_new();
+    const cleanJobTitle = (job.title || 'Job').replace(/[^a-zA-Z0-9]/g, '_');
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Candidate Rankings");
+
+    // 5. Build file system payload write execution context
+    XLSX.writeFile(workbook, `Azendly_Report_${cleanJobTitle}.xlsx`);
+    } catch (error) {
+      console.error("Error generating excel report spreadsheet:", error);
+    } finally {
+      setIsGeneratingReport(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#0D0D0F] pt-24 pb-12">
@@ -115,9 +185,22 @@ export default function JobDetailView({ job, onBack }: JobDetailViewProps) {
                   <Download size={18} />
                   Download All
                 </button>
-                <button className="px-6 py-3 bg-cyan-500/10 border border-cyan-500/20 rounded-xl text-cyan-400 font-bold flex items-center justify-center gap-2 hover:bg-cyan-500/20 transition-all text-sm">
-                  <BarChart3 size={18} />
-                  Generate Report
+                <button 
+                  onClick={handleGenerateReport}
+                  disabled={isGeneratingReport || rankings.length === 0 || loading}
+                  className="px-6 py-3 bg-cyan-500/10 border border-cyan-500/20 rounded-xl text-cyan-400 font-bold flex items-center justify-center gap-2 hover:bg-cyan-500/20 transition-all text-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {isGeneratingReport ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-cyan-400/20 border-t-cyan-400 rounded-full animate-spin" />
+                      <span>Generating...</span>
+                    </>
+                  ) : (
+                    <>
+                      <BarChart3 size={18} />
+                      <span>Generate Report</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
