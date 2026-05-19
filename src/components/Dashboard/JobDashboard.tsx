@@ -31,6 +31,7 @@ export default function Dashboard({ onModalToggle }: DashboardProps) {
   const [viewMode, setViewMode] = useState<'list' | 'upload' | 'view'>('list');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [rankingJobIds, setRankingJobIds] = useState<Set<string>>(new Set());
 
   const userId = 'user_123';
   
@@ -80,13 +81,22 @@ export default function Dashboard({ onModalToggle }: DashboardProps) {
   };
 
   const handleRank = async (jobId: string) => {
+    setRankingJobIds(prev => new Set(prev).add(jobId));
     try {
       await apiService.rankJob(jobId);
       await fetchJobs();
-      setSelectedJobId(jobId);
-      setViewMode('view');
+      // After ranking, we could automatically switch to the view mode for that job , uncomment this ot achieve it
+      // setSelectedJobId(jobId);
+      // setViewMode('view');
     } catch (error) {
       console.error('Ranking failed:', error);
+    }
+    finally{
+      setRankingJobIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(jobId);
+        return newSet;
+      });
     }
   };
 
@@ -175,8 +185,13 @@ export default function Dashboard({ onModalToggle }: DashboardProps) {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {jobs.map((job) => {
+            {jobs.sort((a, b) => {
+              const aRanked = a.status === 'RANKED' ? 1 : 0;
+              const bRanked = b.status === 'RANKED' ? 1 : 0;
+              return aRanked - bRanked; // 0 (unranked) comes before 1 (ranked)
+            }).map((job) => {
               const isRanked = job.status === 'RANKED';
+              const isCurrentlyRanking = rankingJobIds.has(job.id);
 
               return (
                 <motion.div
@@ -226,6 +241,7 @@ export default function Dashboard({ onModalToggle }: DashboardProps) {
                             setSelectedJobId(job.id);
                             setViewMode('upload');
                           }}
+                          disabled={isCurrentlyRanking}
                           className="flex-1 py-3 px-4 rounded-xl bg-green-400 border border-white/10 text-white text-xs font-bold flex items-center justify-center gap-2 hover:bg-green-400 shadow-green-500/20 transition-all uppercase tracking-widest"
                         >
                           <Upload size={14} />
@@ -241,15 +257,26 @@ export default function Dashboard({ onModalToggle }: DashboardProps) {
                             handleRank(job.id);
                           }
                         }}
-                        disabled={!isRanked && job.totalResumes === 0}
+                        // Disable button if it's currently processing OR if there are no resumes
+                        disabled={isCurrentlyRanking || (!isRanked && (job.totalResumes ?? 0) === 0)}
                         className={`flex-1 py-3 px-4 rounded-xl text-black text-xs font-black flex items-center justify-center gap-2 transition-all uppercase tracking-widest shadow-lg ${
-                          isRanked || job.totalResumes > 0 
+                          isCurrentlyRanking || isRanked || (job.totalResumes ?? 0) > 0 
                             ? 'bg-cyan-500 hover:bg-cyan-400 shadow-cyan-500/20' 
                             : 'bg-white/10 text-gray-500 cursor-not-allowed shadow-none'
-                        }`}
+                        } disabled:opacity-80`}
                       >
-                        {isRanked ? <Eye size={14} /> : <BarChart3 size={14} />}
-                        {isRanked ? 'View Results' : 'Rank'}
+                        {isCurrentlyRanking ? (
+                          <>
+                            {/* Spinner layout element */}
+                            <div className="w-3.5 h-3.5 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+                            <span>Ranking...</span>
+                          </>
+                        ) : (
+                          <>
+                            {isRanked ? <Eye size={14} /> : <BarChart3 size={14} />}
+                            {isRanked ? 'View Results' : 'Rank'}
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>

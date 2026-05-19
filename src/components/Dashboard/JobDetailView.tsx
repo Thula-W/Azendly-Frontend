@@ -61,23 +61,19 @@ export default function JobDetailView({ job, onBack }: JobDetailViewProps) {
               <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
               Back to Dashboard
             </button>
-
-    <div className="flex items-center gap-4 mb-3">
-      <div className="p-3 rounded-2xl bg-cyan-500/10 text-cyan-400 flex-shrink-0">
-        <Briefcase size={24} />
-      </div>
-      <h1 className="text-3xl md:text-4xl font-black text-white">{job.title}</h1>
-    </div>
-    {/* Removed max-w-3xl and line-clamp-2 so the description reads naturally full-width */}
-    <p className="text-gray-400 text-sm md:text-base leading-relaxed w-full">
-      {job.overview}
-    </p>
-  </div>
-  
-  <div className="flex items-center gap-3">
-
-          </div>
-          
+              <div className="flex items-center gap-4 mb-3">
+                <div className="p-3 rounded-2xl bg-cyan-500/10 text-cyan-400 flex-shrink-0">
+                  <Briefcase size={24} />
+                </div>
+                <h1 className="text-3xl md:text-4xl font-black text-white">{job.title}</h1>
+              </div>
+              {/* Removed max-w-3xl and line-clamp-2 so the description reads naturally full-width */}
+              <p className="text-gray-400 text-sm md:text-base leading-relaxed w-full">
+                {job.overview}
+              </p>
+            </div>          
+            <div className="flex items-center gap-3">
+          </div>         
           <div className="flex items-center gap-3">
           </div>
         </div>
@@ -127,10 +123,17 @@ export default function JobDetailView({ job, onBack }: JobDetailViewProps) {
             </div>
 
             {loading ? (
-              <div className="space-y-4">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="h-20 rounded-2xl bg-white/5 border border-white/10 animate-pulse" />
-                ))}
+              <div className="flex flex-col items-center justify-center py-40 col-span-1 lg:col-span-3">
+                {/* Concentric spinning glowing circle */}
+                <div className="relative w-16 h-16 flex items-center justify-center mb-6">
+                  <div className="absolute inset-0 border-4 border-cyan-500/10 rounded-full" />
+                  <div className="absolute inset-0 border-4 border-transparent border-t-cyan-500 rounded-full animate-spin shadow-lg shadow-cyan-500/20" />
+                </div>
+                
+                {/* Loading Typography */}
+                <h4 className="text-white text-lg font-bold tracking-wide text-center animate-pulse">
+                  Gathering your top Picks
+                </h4>
               </div>
             ) : filteredResumes.length === 0 ? (
               <div className="py-24 text-center bg-white/5 rounded-[2rem] border border-dashed border-white/10">
