@@ -10,7 +10,7 @@ async function getAuthToken(): Promise<string> {
   // const { getAuth } = await import('firebase/auth');
   // return (await getAuth().currentUser?.getIdToken()) ?? '';
   // throw new Error('getAuthToken() is not implemented');
-  return 'eyJhbGciOiJFUzI1NiIsImtpZCI6IjI1ZmJkNmM2LTZhNWYtNDljZS05YzY2LTEwNGU2YzcxNjEzMSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3BjbHhpeGR0ZGZlbHFwaWtkYXJ4LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI2NjY4NDJkMC1iMzcxLTQ3MWEtYWM0Mi04NDA2ODdiYjYwODMiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc5MTAzODkwLCJpYXQiOjE3NzkxMDAyOTAsImVtYWlsIjoidGVzdEBlbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsX3ZlcmlmaWVkIjp0cnVlfSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3OTEwMDI5MH1dLCJzZXNzaW9uX2lkIjoiOWQ4OWQ1YTctMzJlNy00YmJhLTk0ZDAtYzU0MmQ5MTAwY2E2IiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.FQirQ6eYVQbRU9QmqHQbm09BXu-AgOyzGpHT3hsn26g6Npo20JUYkZL0Rlq8l3rimmFxMLq5beTtSCLyVGkgpA'
+  return 'eyJhbGciOiJFUzI1NiIsImtpZCI6IjI1ZmJkNmM2LTZhNWYtNDljZS05YzY2LTEwNGU2YzcxNjEzMSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3BjbHhpeGR0ZGZlbHFwaWtkYXJ4LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI2NjY4NDJkMC1iMzcxLTQ3MWEtYWM0Mi04NDA2ODdiYjYwODMiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc5MTc0ODAwLCJpYXQiOjE3NzkxNzEyMDAsImVtYWlsIjoidGVzdEBlbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsX3ZlcmlmaWVkIjp0cnVlfSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3OTE3MTIwMH1dLCJzZXNzaW9uX2lkIjoiZDUwNmQ2YWMtNmFjYS00NjE1LTg5NDMtYTAwZjExNTAzYjllIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.NVNs6Oxn7MJzrBz6C9l5JSf5DgRUHi1X51J9auwbDMcGyzEKZeQPaVGX6Xxc1T81jrRPrhNhc2pjXZsZ1Z08Cg'
 }
 
   async function authHeaders(): Promise<HeadersInit> {
@@ -163,17 +163,19 @@ export const apiService = {
     };
 
     const intentResponse = await apiFetch<{
-      uploads: Array<{ uploadUrl: string; fileKey: string; fileName: string }>;
+      uploadIntents: Array<{ signedUrl: string; resumeId: string; storagePath: string , expiresIn: number }>,
+      constraints: any;
     }>('/api/resumes/upload-intent', {
       method: 'POST',
       headers,
       body: JSON.stringify(intentPayload),
     });
 
+    console.log(intentResponse.uploadIntents)
     // 2. Upload files directly to storage using the presigned URLs
     await Promise.all(
-      intentResponse.uploads.map(({ uploadUrl }, idx) =>
-        fetch(uploadUrl, {
+      intentResponse.uploadIntents.map(({ signedUrl }, idx) =>
+        fetch(signedUrl, {
           method: 'PUT',
           body: files[idx],
           headers: { 'Content-Type': files[idx].type },
@@ -182,9 +184,8 @@ export const apiService = {
     );
 
     // 3. Confirm uploads & (optionally) trigger scoring
-    const confirmedResumes = intentResponse.uploads.map(({ fileKey, fileName }) => ({
-      fileKey,
-      fileName,
+    const confirmedResumes = intentResponse.uploadIntents.map(({ resumeId }) => ({
+      resumeId: resumeId,
     }));
 
     return apiFetch<Resume[]>('/api/resumes/upload-confirm', {

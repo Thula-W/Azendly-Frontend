@@ -19,8 +19,8 @@ export default function AddJobModal({ isOpen, onClose, onJobCreated, userId }: A
     expectedSkills: '',
     expectedExperience: '',
     candidateOverview: '',
-    educationLevel: 'Bachelors',
-    languages: '',
+    educationLevel: 'Select',
+    // languages: '',
     yearsOfExperience: '0',
     signals: ''
   });
@@ -45,9 +45,9 @@ export default function AddJobModal({ isOpen, onClose, onJobCreated, userId }: A
         experience: formData.expectedExperience,
         bio: formData.candidateOverview,
         constraints: {
-          educationLevel: formData.educationLevel,
-          languages: formData.languages,
-          yearsOfExperience: formData.yearsOfExperience
+          educationLevel: formData.educationLevel === 'Select' ? null : formData.educationLevel,
+          // languages: formData.languages,
+          yearsOfExperience: Number(formData.yearsOfExperience)
         },
         signals: formData.signals,
         userId,
@@ -179,13 +179,14 @@ export default function AddJobModal({ isOpen, onClose, onJobCreated, userId }: A
                     onChange={e => setFormData({ ...formData, educationLevel: e.target.value })}
                     className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-xs text-white focus:border-cyan-500 focus:outline-none appearance-none cursor-pointer [&>option]:bg-[#111113] [&>option]:text-white"
                   >
+                    <option value="Select">Select</option>
                     <option value="Diploma">Diploma</option>
                     <option value="Bachelors">Bachelors</option>
                     <option value="Masters">Masters</option>
                     <option value="PhD">PhD</option>
                   </select>
                 </div>
-                <div className="space-y-2">
+                {/* <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 ml-1">Languages</label>
                   <input 
                     value={formData.languages}
@@ -193,7 +194,7 @@ export default function AddJobModal({ isOpen, onClose, onJobCreated, userId }: A
                     placeholder="e.g. English"
                     className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-xs text-white focus:border-cyan-500 focus:outline-none"
                   />
-                </div>
+                </div> */}
                 <div className="space-y-2 lg:col-span-1">
                   <label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 ml-1">Years of Exp</label>
                   <input 
