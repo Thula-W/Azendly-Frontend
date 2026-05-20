@@ -26,6 +26,8 @@ export default function JobDetailView({ job, onBack }: JobDetailViewProps) {
   const [selectedResumeId, setSelectedResumeId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [processingResumeId, setProcessingResumeId] = useState<string | null>(null);
+  const [isBulkDownloading, setIsBulkDownloading] = useState(false);
 
   const fetchRankings = async () => {
     setLoading(true);
@@ -119,6 +121,65 @@ export default function JobDetailView({ job, onBack }: JobDetailViewProps) {
     }
   };
 
+
+  const handleSingleFileAction = async (resumeId: string, action: 'view' | 'download') => {
+    setProcessingResumeId(resumeId);
+    
+    try {
+      // 1. Fetch the completely valid URL string from your backend API
+      const url = await apiService.getResumeUrl(resumeId, action);
+      
+      // 2. Create an invisible native HTML anchor tag
+      const link = document.createElement('a');
+      link.href = url;
+      
+      if (action === 'view') {
+        // 💡 THIS IS THE MAGIC: Opens a native browser tab directly to the R2 domain,
+        // bypassing JavaScript window controls and avoiding the about:blank freeze.
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer'; 
+      } else {
+        // Direct attachment file download configuration
+        link.setAttribute('download', '');
+      }
+
+      // 3. Append to body, click it natively, and clean up immediately
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+    } catch (error) {
+      console.error(`Failed to handle file action:`, error);
+    } finally {
+      setProcessingResumeId(null);
+    }
+  };
+
+  // 2. Download all filtered rankings in a single Zip archive
+  const handleBulkDownload = async () => {
+    if (filteredResumes.length === 0) return;
+    setIsBulkDownloading(true);
+    try {
+      const resumeIds = filteredResumes.map(r => r.resumeId);
+      
+      // The apiService call must handle 'responseType: "blob"' under the hood
+      const blobPayload = await apiService.downloadBulkResumes(resumeIds, job.id);
+      
+      const url = window.URL.createObjectURL(blobPayload);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${job.title.replace(/\s+/g, '_')}_topPicks.zip`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Bulk download failed:", error);
+    } finally {
+      setIsBulkDownloading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#0D0D0F] pt-24 pb-12">
       <div className="max-w-7xl mx-auto px-6">
@@ -181,10 +242,27 @@ export default function JobDetailView({ job, onBack }: JobDetailViewProps) {
                 />
               </div>
               <div className="flex gap-2">
-                <button className="px-6 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold flex items-center justify-center gap-2 hover:bg-white/10 transition-all text-sm">
+                <button 
+  onClick={handleBulkDownload}
+  disabled={isBulkDownloading || filteredResumes.length === 0 || loading}
+  className="px-6 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold flex items-center justify-center gap-2 hover:bg-white/10 transition-all text-sm disabled:opacity-40 disabled:cursor-not-allowed"
+>
+  {isBulkDownloading ? (
+    <>
+      <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+      <span>Zipping...</span>
+    </>
+  ) : (
+    <>
+      <Download size={18} />
+      Download All
+    </>
+  )}
+</button>
+                {/* <button className="px-6 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-bold flex items-center justify-center gap-2 hover:bg-white/10 transition-all text-sm">
                   <Download size={18} />
                   Download All
-                </button>
+                </button> */}
                 <button 
                   onClick={handleGenerateReport}
                   disabled={isGeneratingReport || rankings.length === 0 || loading}
@@ -349,7 +427,36 @@ export default function JobDetailView({ job, onBack }: JobDetailViewProps) {
                                 </div>
                               </div>
 
-                              <div className="pt-4 flex gap-3">
+<div className="pt-4 flex gap-3">
+  {/* View Button */}
+  <button 
+    onClick={() => handleSingleFileAction(resume.resumeId, 'view')}
+    disabled={processingResumeId === resume.resumeId}
+    className="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+  >
+    {processingResumeId === resume.resumeId ? (
+      <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+    ) : (
+      <FileText size={14} />
+    )}
+    View Full Resume
+  </button>
+
+  {/* Download Button */}
+  <button 
+    onClick={() => handleSingleFileAction(resume.resumeId, 'download')}
+    disabled={processingResumeId === resume.resumeId}
+    className="flex-1 py-3 rounded-xl bg-cyan-500 text-black text-[10px] font-black uppercase tracking-widest hover:bg-cyan-400 transition-all flex items-center justify-center gap-2 shadow-xl shadow-cyan-500/10 disabled:opacity-50"
+  >
+    {processingResumeId === resume.resumeId ? (
+      <div className="w-3.5 h-3.5 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+    ) : (
+      <Download size={14} />
+    )}
+    Download
+  </button>
+</div>
+                              {/* <div className="pt-4 flex gap-3">
                                 <button className="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all flex items-center justify-center gap-2">
                                   <FileText size={14} />
                                   View Full Resume
@@ -358,7 +465,7 @@ export default function JobDetailView({ job, onBack }: JobDetailViewProps) {
                                   <Download size={14} />
                                   Download
                                 </button>
-                              </div>
+                              </div> */}
                             </div>
                           </motion.div>
                         )}

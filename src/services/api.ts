@@ -10,9 +10,7 @@ async function getAuthToken(): Promise<string> {
   // const { getAuth } = await import('firebase/auth');
   // return (await getAuth().currentUser?.getIdToken()) ?? '';
   // throw new Error('getAuthToken() is not implemented');
-  return 'eyJhbGciOiJFUzI1NiIsImtpZCI6IjI1ZmJkNmM2LTZhNWYtNDljZS05YzY2LTEwNGU2YzcxNjEzMSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3BjbHhpeGR0ZGZlbHFwaWtkYXJ4LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI2NjY4NDJkMC1iMzcxLTQ3MWEtYWM0Mi04NDA2ODdiYjYwODMiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc5MTc0ODAwLCJpYXQiOjE3NzkxNzEyMDAsImVtYWlsIjoidGVzdEBlbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsX3ZlcmlmaWVkIjp0cnVlfSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3OTE3MTIwMH1dLCJzZXNzaW9uX2lkIjoiZDUwNmQ2YWMtNmFjYS00NjE1LTg5NDMtYTAwZjExNTAzYjllIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.NVNs6Oxn7MJzrBz6C9l5JSf5DgRUHi1X51J9auwbDMcGyzEKZeQPaVGX6Xxc1T81jrRPrhNhc2pjXZsZ1Z08Cg'
-}
-
+  return 'eyJhbGciOiJFUzI1NiIsImtpZCI6IjI1ZmJkNmM2LTZhNWYtNDljZS05YzY2LTEwNGU2YzcxNjEzMSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3BjbHhpeGR0ZGZlbHFwaWtkYXJ4LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI2NjY4NDJkMC1iMzcxLTQ3MWEtYWM0Mi04NDA2ODdiYjYwODMiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc5MjczNjA1LCJpYXQiOjE3NzkyNzAwMDUsImVtYWlsIjoidGVzdEBlbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsX3ZlcmlmaWVkIjp0cnVlfSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3OTI3MDAwNX1dLCJzZXNzaW9uX2lkIjoiNmMxNDZkZDItZTRlYi00ODY5LThlNWUtMDEyYTk2ODdmMWQxIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.jdULEWCBWQJS8Jx47toDM1Uvc-3hXz9KR8IL-YjDt-3ml8j7eLuAAP4yTYqJSKE4QhfU3SBGimwKYtIRQeMvLg'}
   async function authHeaders(): Promise<HeadersInit> {
   const token = await getAuthToken();
   return {
@@ -35,8 +33,6 @@ async function apiFetch<T>(
 
 // ─── Mock helpers (for endpoints not yet implemented in backend) ──────────────
 
-const JOBS_KEY    = 'azendly_jobs';
-const RESUMES_KEY = 'azendly_resumes';
 const CREDITS_KEY = 'azendly_credits';
 const INITIAL_CREDITS = 500;
 
@@ -135,20 +131,6 @@ export const apiService = {
     return res;
   },
 
-  /**
-   * Two-step upload flow:
-   *
-   * Step 1 — POST /api/resumes/upload-intent
-   *   Body: { jobId, files: [{ name, size, type }, ...] }
-   *   Returns: presigned URLs or upload tokens for each file.
-   *
-   * Step 2 — Upload each file directly (e.g. to S3 / GCS) using the URLs
-   *   returned by the intent endpoint.
-   *
-   * Step 3 — POST /api/resumes/upload-confirm
-   *   Body: { jobId, resumes: [...confirmedFileRefs], triggerScoring?: boolean }
-   *   Returns: Resume[]
-   */
   async uploadResumes(
     jobId: string,
     files: File[],
@@ -163,7 +145,7 @@ export const apiService = {
     };
 
     const intentResponse = await apiFetch<{
-      uploadIntents: Array<{ signedUrl: string; resumeId: string; storagePath: string , expiresIn: number }>,
+      uploadIntents: Array<{ signedUrl: string; resumeId: string , expiresIn: number }>,
       constraints: any;
     }>('/api/resumes/upload-intent', {
       method: 'POST',
@@ -194,4 +176,32 @@ export const apiService = {
       body: JSON.stringify({ jobId, resumes: confirmedResumes, triggerScoring }),
     });
   },
+
+  async getResumeUrl(resumeId: string , action: 'view' | 'download'): Promise<any> {
+    const res = await apiFetch<{ url: string }>(`/api/resumes/${resumeId}/url?action=${action}`, {
+      method: 'GET',
+      headers: await authHeaders(),
+    });
+    return res.url;
+  },
+
+  async downloadBulkResumes(resumeIds: string[], jobId : string): Promise<Blob> { {
+    const response = await fetch('/api/resumes/download-bulk', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/zip, application/octet-stream',
+        ...(await authHeaders())
+      },
+      body: JSON.stringify({ resumeIds, jobId }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Failed to compile bulk zip archive (Status: ${response.status})`);
+    }
+
+    // Unpacks the incoming network stream data as a raw binary Blob object
+    return response.blob(); 
+  }}
 };
