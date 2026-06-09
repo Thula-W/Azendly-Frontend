@@ -49,12 +49,12 @@ export default function Dashboard({ onModalToggle }: DashboardProps) {
   const fetchJobs = async () => {
     setLoading(true);
     try {
-      const [data, creditCount] = await Promise.all([
+      const [data] = await Promise.all([
         apiService.getJobs(userId),
-        apiService.getCredits()
+        // apiService.getCredits()
       ]);
       setJobs(data);
-      setCredits(creditCount);
+      setCredits(100);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {

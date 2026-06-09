@@ -1,17 +1,15 @@
 import { Job, Resume } from '../types';
-
-// ─── Config ──────────────────────────────────────────────────────────────────
+import { supabase } from '../lib/supabase';
 
 const API_BASE =  '';
 
-// Provide / replace this with however you obtain the Firebase ID token
 async function getAuthToken(): Promise<string> {
-  // e.g. from Firebase Auth:
-  // const { getAuth } = await import('firebase/auth');
-  // return (await getAuth().currentUser?.getIdToken()) ?? '';
-  // throw new Error('getAuthToken() is not implemented');
-  return 'eyJhbGciOiJFUzI1NiIsImtpZCI6IjI1ZmJkNmM2LTZhNWYtNDljZS05YzY2LTEwNGU2YzcxNjEzMSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3BjbHhpeGR0ZGZlbHFwaWtkYXJ4LnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiI2NjY4NDJkMC1iMzcxLTQ3MWEtYWM0Mi04NDA2ODdiYjYwODMiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzc5MjczNjA1LCJpYXQiOjE3NzkyNzAwMDUsImVtYWlsIjoidGVzdEBlbWFpbC5jb20iLCJwaG9uZSI6IiIsImFwcF9tZXRhZGF0YSI6eyJwcm92aWRlciI6ImVtYWlsIiwicHJvdmlkZXJzIjpbImVtYWlsIl19LCJ1c2VyX21ldGFkYXRhIjp7ImVtYWlsX3ZlcmlmaWVkIjp0cnVlfSwicm9sZSI6ImF1dGhlbnRpY2F0ZWQiLCJhYWwiOiJhYWwxIiwiYW1yIjpbeyJtZXRob2QiOiJwYXNzd29yZCIsInRpbWVzdGFtcCI6MTc3OTI3MDAwNX1dLCJzZXNzaW9uX2lkIjoiNmMxNDZkZDItZTRlYi00ODY5LThlNWUtMDEyYTk2ODdmMWQxIiwiaXNfYW5vbnltb3VzIjpmYWxzZX0.jdULEWCBWQJS8Jx47toDM1Uvc-3hXz9KR8IL-YjDt-3ml8j7eLuAAP4yTYqJSKE4QhfU3SBGimwKYtIRQeMvLg'}
-  async function authHeaders(): Promise<HeadersInit> {
+  const { data: { session }, error } = await supabase.auth.getSession();
+  if (error || !session) throw new Error('Not authenticated');
+  return session.access_token; // always fresh — Supabase auto-refreshes if expired
+}
+
+async function authHeaders(): Promise<HeadersInit> {
   const token = await getAuthToken();
   return {
     'Content-Type': 'application/json',
@@ -97,6 +95,37 @@ export const apiService = {
       method: 'POST',
       headers: await authHeaders(),
       body: JSON.stringify({ title, overview, skills, bio, experience, constraints, signals }),
+    });
+  },
+
+  async addEvaluations(
+    jobId: string,
+    evaluations: Array<{ file: File | null; verdict: string }>
+  ): Promise<{ success: boolean }> {
+    console.log(`Adding evaluations for job ${jobId}:`, evaluations);
+
+    const formData = new FormData();
+
+    // Filter out any empty pairs just in case, then append using the index notation your backend expects
+    evaluations
+      .filter((item) => item.file !== null && item.verdict.trim() !== '')
+      .forEach((item, index) => {
+        if (item.file) {
+          formData.append(`cv_${index}`, item.file);
+          formData.append(`verdict_${index}`, item.verdict);
+        }
+      });
+
+
+    const token = await getAuthToken();
+    const baseHeaders: HeadersInit = {
+      Authorization: `Bearer ${token}`,
+    };
+
+    return apiFetch<{ success: boolean }>(`/api/jobs/${jobId}/evals`, {
+      method: 'POST',
+      headers: baseHeaders,
+      body: formData, // Passing the FormData object directly instead of JSON stringifying
     });
   },
 
@@ -189,7 +218,6 @@ export const apiService = {
     const response = await fetch('/api/resumes/download-bulk', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
         'Accept': 'application/zip, application/octet-stream',
         ...(await authHeaders())
       },
