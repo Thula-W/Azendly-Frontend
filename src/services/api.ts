@@ -36,7 +36,7 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const apiService = {
 
-  async getCredits(userId : string ): Promise<any> {
+  async getCredits(userId?: string ): Promise<any> {
     const res = await apiFetch<any[]>('/api/users/credits', {
       method: 'POST',
       headers: await authHeaders(),

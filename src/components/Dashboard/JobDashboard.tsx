@@ -91,18 +91,46 @@ export default function Dashboard({ onModalToggle }: DashboardProps) {
     }
   };
 
+  // const handleRank = async (jobId: string) => {
+  //   setRankingJobIds(prev => new Set(prev).add(jobId));
+  //   try {
+  //     await apiService.rankJob(jobId);
+  //     await fetchJobs();
+  //     // After ranking, we could automatically switch to the view mode for that job , uncomment this ot achieve it
+  //     // setSelectedJobId(jobId);
+  //     // setViewMode('view');
+  //   } catch (error) {
+  //     console.error('Ranking failed:', error);
+  //   }
+  //   finally{
+  //     setRankingJobIds(prev => {
+  //       const newSet = new Set(prev);
+  //       newSet.delete(jobId);
+  //       return newSet;
+  //     });
+  //   }
+  // };
+
   const handleRank = async (jobId: string) => {
+    // Guard: don't even attempt if we already know we're out of ranking credits
+    if (ranks !== null && ranks <= 0) return;
+
     setRankingJobIds(prev => new Set(prev).add(jobId));
+
+    // Optimistic decrement, applied immediately
+    adjustCredits(0, -1);
+
     try {
       await apiService.rankJob(jobId);
       await fetchJobs();
-      // After ranking, we could automatically switch to the view mode for that job , uncomment this ot achieve it
-      // setSelectedJobId(jobId);
-      // setViewMode('view');
+      const creditsData =  await apiService.getCredits(userId ?? undefined);
+      // response is the absolute truth — overwrite whatever optimistic value is there now
+      syncCredits(creditsData.resumesRemaining , creditsData.rankingsRemaining ?? null);
     } catch (error) {
       console.error('Ranking failed:', error);
-    }
-    finally{
+      // Roll back the optimistic decrement since the request failed
+      adjustCredits(0, +1);
+    } finally {
       setRankingJobIds(prev => {
         const newSet = new Set(prev);
         newSet.delete(jobId);
@@ -116,6 +144,23 @@ export default function Dashboard({ onModalToggle }: DashboardProps) {
     setIsAddModalOpen(false);
   };
 
+  // Apply an immediate, optimistic delta to the credit counters.
+  // Using functional updates so concurrent clicks on different jobs don't clobber each other.
+  const adjustCredits = (resumeDelta: number, rankingDelta: number) => {
+    if (resumeDelta !== 0) {
+      setCredits(prev => (prev !== null ? Math.max(0, prev + resumeDelta) : prev));
+    }
+    if (rankingDelta !== 0) {
+      setRanks(prev => (prev !== null ? Math.max(0, prev + rankingDelta) : prev));
+    }
+  };
+
+  // Overwrite local state with the absolute truth returned by the backend.
+  const syncCredits = (resumesRemaining?: number, rankingsRemaining?: number) => {
+    if (typeof resumesRemaining === 'number') setCredits(resumesRemaining);
+    if (typeof rankingsRemaining === 'number') setRanks(rankingsRemaining);
+  };
+
   const selectedJob = jobs.find(j => j.id === selectedJobId) || null;
 
   if (viewMode === 'upload' && selectedJob) {
@@ -127,6 +172,11 @@ export default function Dashboard({ onModalToggle }: DashboardProps) {
           fetchJobs();
           setViewMode('list');
         }}
+        userId={userId}
+        resumesRemaining={credits}
+        rankingsRemaining={ranks}
+        onAdjustCredits={adjustCredits}
+        onSyncCredits={syncCredits}
       />
     );
   }
@@ -238,6 +288,7 @@ export default function Dashboard({ onModalToggle }: DashboardProps) {
             }).map((job) => {
               const isRanked = job.status === 'RANKED';
               const isCurrentlyRanking = rankingJobIds.has(job.id);
+              const insufficientRankings = !isRanked && ranks !== null && ranks <= 0;
 
               return (
                 <motion.div
@@ -304,7 +355,7 @@ export default function Dashboard({ onModalToggle }: DashboardProps) {
                           }
                         }}
                         // Disable button if it's currently processing OR if there are no resumes
-                        disabled={isCurrentlyRanking || (!isRanked && (job.totalResumes ?? 0) === 0)}
+                        disabled={isCurrentlyRanking || (!isRanked && (job.totalResumes ?? 0) === 0) || insufficientRankings}
                         className={`flex-1 py-3 px-4 rounded-xl text-black text-xs font-black flex items-center justify-center gap-2 transition-all uppercase tracking-widest shadow-lg ${
                           isCurrentlyRanking || isRanked || (job.totalResumes ?? 0) > 0 
                             ? 'bg-cyan-500 hover:bg-cyan-400 shadow-cyan-500/20' 

@@ -17,9 +17,14 @@ interface UploadResumesProps {
   job: Job;
   onBack: () => void;
   onComplete: () => void;
+  userId: string | null;
+  resumesRemaining: number | null;
+  rankingsRemaining: number | null;
+  onAdjustCredits: (resumeDelta: number, rankingDelta: number) => void;
+  onSyncCredits: (resumesRemaining?: number, rankingsRemaining?: number) => void;
 }
 
-export default function UploadResumes({ job, onBack, onComplete }: UploadResumesProps) {
+export default function UploadResumes({ job, onBack, onComplete, userId, resumesRemaining, rankingsRemaining, onAdjustCredits, onSyncCredits }: UploadResumesProps) {
   const [files, setFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -47,26 +52,66 @@ export default function UploadResumes({ job, onBack, onComplete }: UploadResumes
     setFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleUpload = async (andRank = false) => {
-    if (files.length === 0) return;
+  // const handleUpload = async (andRank = false) => {
+  //   if (files.length === 0) return;
     
-    setLoading(true);
-    setUploadStatus(andRank ? 'ranking' : 'uploading');
+  //   setLoading(true);
+  //   setUploadStatus(andRank ? 'ranking' : 'uploading');
     
-    try {
-      await apiService.uploadResumes(job.id, files);
-      if (andRank) {
-        await apiService.rankJob(job.id);
-      }
-      setUploadStatus('done');
-      setTimeout(onComplete, 1500);
-    } catch (error) {
-      console.error('Upload failed:', error);
-      setUploadStatus('idle');
-    } finally {
-      setLoading(false);
+  //   try {
+  //     await apiService.uploadResumes(job.id, files);
+  //     if (andRank) {
+  //       await apiService.rankJob(job.id);
+  //     }
+  //     setUploadStatus('done');
+  //     setTimeout(onComplete, 1500);
+  //   } catch (error) {
+  //     console.error('Upload failed:', error);
+  //     setUploadStatus('idle');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+const handleUpload = async (andRank = false) => {
+  if (files.length === 0) return;
+
+  // Guards — should be unreachable since buttons are disabled, but double-check
+  if (resumesRemaining !== null && resumesRemaining < files.length) return;
+  if (andRank && rankingsRemaining !== null && rankingsRemaining <= 0) return;
+
+  setLoading(true);
+  setUploadStatus(andRank ? 'ranking' : 'uploading');
+
+  // Optimistic decrement, applied immediately and atomically
+  onAdjustCredits(-files.length, andRank ? -1 : 0);
+
+  try {
+    await apiService.uploadResumes(job.id, files);
+
+    if (andRank) {
+      await apiService.rankJob(job.id);
     }
-  };
+
+    const creditsData =  await apiService.getCredits(userId ?? undefined);
+
+    // finalResponse is the absolute truth — overwrite optimistic values
+    onSyncCredits(creditsData.resumesRemaining, creditsData.rankingsRemaining);
+
+    setUploadStatus('done');
+    setTimeout(onComplete, 1500);
+  } catch (error) {
+    console.error('Upload failed:', error);
+    // Roll back optimistic decrement
+    onAdjustCredits(files.length, andRank ? 1 : 0);
+    setUploadStatus('idle');
+  } finally {
+    setLoading(false);
+  }
+};
+
+const insufficientResumes = resumesRemaining !== null && resumesRemaining < files.length;
+const insufficientRankings = rankingsRemaining !== null && rankingsRemaining <= 0;
 
   return (
     <div className="min-h-screen bg-[#0D0D0F] pt-24 pb-12 px-6">
@@ -182,9 +227,10 @@ export default function UploadResumes({ job, onBack, onComplete }: UploadResumes
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8 pt-8 border-t border-white/5">
+          
                   <button 
                     onClick={() => handleUpload(false)}
-                    disabled={loading}
+                    disabled={loading || insufficientResumes}
                     className="py-4 px-6 rounded-2xl bg-white/5 border border-white/10 text-white font-black uppercase tracking-widest text-xs hover:bg-white/10 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
                   >
                     {uploadStatus === 'uploading' ? (
@@ -196,7 +242,7 @@ export default function UploadResumes({ job, onBack, onComplete }: UploadResumes
                   </button>
                   <button 
                     onClick={() => handleUpload(true)}
-                    disabled={loading}
+                    disabled={loading || insufficientResumes || insufficientRankings }
                     className="py-4 px-6 rounded-2xl bg-gradient-to-r from-purple-600 to-cyan-600 text-white font-black uppercase tracking-widest text-xs hover:scale-[1.01] transition-all flex items-center justify-center gap-3 shadow-xl shadow-cyan-500/10 disabled:opacity-50"
                   >
                     {uploadStatus === 'ranking' ? (
