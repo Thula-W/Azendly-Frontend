@@ -16,6 +16,7 @@ import AddJobModal from './AddJobModal';
 import UploadResumes from './UploadResumes';
 import JobDetailView from './JobDetailView';
 import BillingView from './BillingView';
+import { supabase } from '../../lib/supabase';
 
 interface DashboardProps {
   onModalToggle?: (isOpen: boolean) => void;
@@ -26,15 +27,27 @@ export default function Dashboard({ onModalToggle }: DashboardProps) {
   const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [credits, setCredits] = useState<number | null>(null);
+  const [ranks, setRanks] = useState<number | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'upload' | 'view'>('list');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [rankingJobIds, setRankingJobIds] = useState<Set<string>>(new Set());
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const userId = 'user_123';
-  
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      }
+    };
+
+    fetchUserData();
+    fetchJobs();
+  }, []);
+
   useEffect(() => {
     const view = searchParams.get('view');
     if (view === 'billing') {
@@ -49,12 +62,13 @@ export default function Dashboard({ onModalToggle }: DashboardProps) {
   const fetchJobs = async () => {
     setLoading(true);
     try {
-      const [data] = await Promise.all([
-        apiService.getJobs(userId),
-        // apiService.getCredits()
+      const [data, creditsData] = await Promise.all([
+        apiService.getJobs(),
+        apiService.getCredits(userId ||'')
       ]);
       setJobs(data);
-      setCredits(100);
+      setCredits(creditsData.resumesRemaining);
+      setRanks(creditsData.rankingsRemaining);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
@@ -62,10 +76,7 @@ export default function Dashboard({ onModalToggle }: DashboardProps) {
     }
   };
 
-  // Single source of mount/initialization fetch execution
-  useEffect(() => {
-    fetchJobs();
-  }, []);
+;
 
   const handleDelete = async (id: string) => {
     setIsDeleting(id);
@@ -140,14 +151,49 @@ export default function Dashboard({ onModalToggle }: DashboardProps) {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-4 mb-2">
               <h1 className="text-3xl md:text-4xl font-black text-white">Dashboard</h1>
-              {credits !== null && (
+              {/* {credits !== null && (
                 <div className="flex items-center gap-2 px-3 py-1 bg-cyan-500/10 border border-cyan-500/20 rounded-full flex-shrink-0">
                   <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
                   <span className="text-[10px] md:text-xs font-black text-white uppercase tracking-wider whitespace-nowrap">
-                    {credits} Remaining
+                    {credits} Resumes Remaining
                   </span>
                 </div>
-              )}
+              )} */}
+              {/* Container ensuring items align nicely */}
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {(credits !== null || ranks !== null) && (
+                  <div className="flex items-center bg-zinc-900/50 backdrop-blur-sm border border-zinc-800 rounded-full px-1 py-1 shadow-inner">
+                    <span className="hidden md:block pl-3 pr-1 text-[11px] font-black text-white uppercase tracking-wider ">
+                      Remaining:
+                    </span>
+                    {/* Credits Quota */}
+                    {credits !== null && (
+                      <div className="flex items-center gap-2 px-3 py-1 bg-cyan-500/10 border border-cyan-500/10 rounded-full">
+                        <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                        <span className="text-[10px] md:text-xs font-black text-cyan-200 uppercase tracking-wider whitespace-nowrap">
+                          {credits} Resumes
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Subtle Visual Divider */}
+                    {credits !== null && ranks !== null && (
+                      <div className="h-4 w-[1px] bg-zinc-800 mx-1.5" />
+                    )}
+
+                    {/* Rankings Quota */}
+                    {ranks !== null && (
+                      <div className="flex items-center gap-2 px-3 py-1 bg-violet-500/10 border border-violet-500/10 rounded-full">
+                        <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
+                        <span className="text-[10px] md:text-xs font-black text-violet-200 uppercase tracking-wider whitespace-nowrap">
+                          {ranks} Rankings
+                        </span>
+                      </div>
+                    )}
+                    
+                  </div>
+                )}
+              </div>
             </div>
             <p className="text-gray-400 text-sm md:text-base">Manage your active job postings and candidate rankings</p>
           </div>

@@ -29,10 +29,6 @@ async function apiFetch<T>(
   return res.json() as Promise<T>;
 }
 
-// ─── Mock helpers (for endpoints not yet implemented in backend) ──────────────
-
-const CREDITS_KEY = 'azendly_credits';
-const INITIAL_CREDITS = 500;
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -40,44 +36,18 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const apiService = {
 
-  // ── Users ─────────────────────────────────────────────────────────────────
-
-  /**
-   * GET /api/users
-   * Returns the current authenticated user (and credits).
-   */
-  async getMe() {
-    return apiFetch<{ id: string; email: string; credits: number; [key: string]: unknown }>(
-      '/api/users',
-      { headers: await authHeaders() },
-    );
-  },
-
-  // ── Credits ───────────────────────────────────────────────────────────────
-
-  /**
-   * Fetches credits from the real /api/users endpoint.
-   * Falls back to localStorage while the backend is being wired up.
-   */
-  async getCredits(): Promise<number> {
-    try {
-      const user = await apiService.getMe();
-      return user.credits ?? 0;
-    } catch {
-      // ── MOCK FALLBACK ──
-      await delay(300);
-      const credits = localStorage.getItem(CREDITS_KEY);
-      if (credits === null) {
-        localStorage.setItem(CREDITS_KEY, INITIAL_CREDITS.toString());
-        return INITIAL_CREDITS;
-      }
-      return parseInt(credits);
-    }
+  async getCredits(userId : string ): Promise<any> {
+    const res = await apiFetch<any[]>('/api/users/credits', {
+      method: 'POST',
+      headers: await authHeaders(),
+      body: JSON.stringify({ userId }),
+    });
+    return res;
   },
 
   // ── Jobs ──────────────────────────────────────────────────────────────────
 
-  async getJobs(userId: string): Promise<any[]> {
+  async getJobs(): Promise<any[]> {
     const res = await apiFetch<any[]>('/api/users/jobs', {
       method: 'GET',
       headers: await authHeaders(),
