@@ -14,7 +14,7 @@ export default function Solution() {
       iconColor: "text-indigo-400"
     },
     { 
-      text: "No more second guessing who to shortlist.", 
+      text: "Save your time and hire faster than your competitors.", 
       icon: Target,
       iconColor: "text-cyan-400"
     }

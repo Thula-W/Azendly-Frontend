@@ -9,13 +9,27 @@ export default function Pricing({ openAuth }: PricingProps) {
   const plans = [
     {
       name: "STARTER",
-      price: "$X",
-      description: "For individuals or occasional hiring",
+      price: "$0",
+      description: "For individuals or small teams",
       features: [
-        "Up to X resumes / month",
-        "Rank candidates based on job requirements",
+        "Up to 50 resumes / month",
+        "Standard processing",
         "Basic filtering",
-        "Downloadable reports",
+        "Standard email support"
+      ],
+      cta: "Get Started",
+      color: "text-gray-400",
+      border: "border-white/10",
+      glow: "shadow-white/5"
+    },
+    {
+      name: "GROWTH",
+      price: "$29",
+      description: "For teams hiring regularly",
+      features: [
+        "Up to 250 resumes / month",
+        "Fast processing",
+        "Advanced filtering",
         "Email support"
       ],
       cta: "Get Started",
@@ -24,32 +38,30 @@ export default function Pricing({ openAuth }: PricingProps) {
       glow: "shadow-emerald-500/10"
     },
     {
-      name: "GROWTH",
-      price: "$X",
-      description: "For teams hiring regularly",
+      name: "PRO",
+      price: "$79",
+      description: "For high-volume hiring",
       features: [
-        "Up to X resumes / month",
-        "Advanced ranking & filtering",
-        "Faster processing",
-        "Saved report history",
-        "Priority email support"
+        "Up to 1000 resumes / month",
+        "Priority AI processing",
+        "Bulk export features",
+        "Priority support"
       ],
       cta: "Get Started",
       popular: true,
-      color: "text-blue-400",
-      border: "border-blue-500/20",
-      glow: "shadow-blue-500/10"
+      color: "text-cyan-400",
+      border: "border-cyan-500/20",
+      glow: "shadow-cyan-500/10"
     },
     {
-      name: "SCALE",
+      name: "ENTERPRISE",
       price: "Custom",
-      description: "For high-volume hiring teams and agencies",
+      description: "For massive recruiting needs",
       features: [
-        "High or unlimited resume capacity",
-        "Advanced filtering & customization",
-        "Integrations (ATS, workflows)",
-        "Dedicated support",
-        "Custom requirements"
+        "Unlimited resume capacity",
+        "Custom AI model tuning",
+        "API & ATS integrations",
+        "Dedicated assistance"
       ],
       cta: "Contact Us",
       color: "text-purple-400",
@@ -71,7 +83,7 @@ export default function Pricing({ openAuth }: PricingProps) {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {plans.map((plan, i) => (
             <motion.div
               key={i}

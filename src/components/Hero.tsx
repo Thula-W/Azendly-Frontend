@@ -22,13 +22,13 @@ export default function Hero() {
           <div className="flex flex-col items-center justify-center gap-4">
             <button 
               onClick={() => scrollToWaitlist()}
-              className="gradient-border px-10 py-5 rounded-full text-xl font-bold hover:scale-105 transition-transform shadow-lg shadow-cyan-500/20"
+              className="gradient-border px-8 py-4 rounded-full text-xl font-bold hover:scale-105 transition-transform shadow-lg shadow-cyan-500/20"
             >
-              GET EARLY ACCESS
+              GET STARTED FOR FREE
             </button>
-            <p className="text-sm text-gray-500 font-medium animate-pulse">
+            {/* <p className="text-sm text-gray-500 font-medium animate-pulse">
               Takes only 10 seconds
-            </p>
+            </p> */}
           </div>
         </motion.div>
       </div>

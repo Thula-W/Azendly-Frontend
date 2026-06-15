@@ -58,6 +58,17 @@ serve(async (req) => {
 
     await resend.emails.send({
       from: "Azendly <onboarding@azendly.net>",
+      to: "azendly.ai@gmail.com",
+      subject: "User Joined waitlist 🎉",
+      html: `
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p> still not verified</p>
+      `,
+    });
+
+    await resend.emails.send({
+      from: "Azendly <onboarding@azendly.net>",
       replyTo: "azendly.ai@gmail.com",
       to: email,
       subject: "Azendly - Verify your email",

@@ -8,6 +8,14 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
 
   return {
+    server: {
+      proxy: {
+        '/api': {
+          target: 'https://api.azendly.net',
+          changeOrigin: true,
+        }
+      }
+    },
     plugins: [react(), tailwindcss(),
       Sitemap({ 
         hostname: 'https://azendly.net',
