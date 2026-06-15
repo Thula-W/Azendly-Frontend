@@ -4,8 +4,8 @@ export default function HowItWorks() {
   const steps = [
     {
       step: "01",
-      title: "Upload resumes",
-      desc: "Drop in a batch of resumes.",
+      title: "Define the Role",
+      desc: "Describe the role and the ideal candidate that you are looking for.",
       color: "text-purple-400",
       bg: "bg-purple-400/5",
       border: "border-purple-400/10",
@@ -13,8 +13,8 @@ export default function HowItWorks() {
     },
     {
       step: "02",
-      title: "Define what you need",
-      desc: "Set the key skills, experience, and requirements.",
+      title: "Personalize",
+      desc: "Provide few resumes along with your feedback about them.",
       color: "text-indigo-400",
       bg: "bg-indigo-400/5",
       border: "border-indigo-400/10",
@@ -22,8 +22,8 @@ export default function HowItWorks() {
     },
     {
       step: "03",
-      title: "Get ranked candidates",
-      desc: "See a clear list of the top talents.",
+      title: "Upload & Rank",
+      desc: "Upload batches of resumes and get ranked results and reports of your top 10%.",
       color: "text-cyan-400",
       bg: "bg-cyan-400/5",
       border: "border-cyan-400/10",

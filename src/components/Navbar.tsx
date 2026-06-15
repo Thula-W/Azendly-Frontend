@@ -78,13 +78,13 @@ export default function Navbar({ isScrolled, mobileMenuOpen, setMobileMenuOpen, 
                   <LayoutDashboard size={16} />
                   Dashboard
                 </Link>
-                <button 
+                {/* <button 
                   onClick={onBillingClick}
                   className={`text-sm font-medium transition-colors flex items-center gap-2 ${isBilling ? 'text-cyan-400' : 'text-gray-400 hover:text-white'}`}
                 >
                   <CreditCard size={16} />
                   Billing
-                </button>
+                </button> */}
                 <button 
                   onClick={onLogout}
                   className="text-sm font-medium text-gray-400 hover:text-red-400 transition-colors flex items-center gap-2"

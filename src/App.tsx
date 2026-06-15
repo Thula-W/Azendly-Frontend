@@ -149,7 +149,7 @@ function AppContent() {
                 <Problem />
                 <Solution />
                 <HowItWorks />
-                <Pricing openAuth={(mode) => setAuthModal({ isOpen: true, mode })} />
+                {/* <Pricing openAuth={(mode) => setAuthModal({ isOpen: true, mode })} />
                 <Waitlist
                   formStep={formStep}
                   userData={userData}
@@ -162,7 +162,7 @@ function AppContent() {
                   handleSubmitFeedback={handleSubmitFeedback}
                   setIsSubmitted={setIsSubmitted}
                 />
-                <FoundersVision />
+                <FoundersVision /> */}
               </>
             }
           />
