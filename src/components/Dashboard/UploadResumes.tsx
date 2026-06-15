@@ -90,6 +90,7 @@ const handleUpload = async (andRank = false) => {
     await apiService.uploadResumes(job.id, files);
 
     if (andRank) {
+      await new Promise((resolve) => setTimeout(resolve, 1000 * files.length)); // Artificial delay to simulate processing time
       await apiService.rankJob(job.id);
     }
 

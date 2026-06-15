@@ -129,6 +129,15 @@ export const apiService = {
     });
   },
 
+  async checkJobStatus(jobId: string): Promise<void> {
+    const res = await apiFetch<void>('/api/jobs/check-status', {
+      method: 'POST',
+      headers: await authHeaders(),
+      body: JSON.stringify({ jobId }),
+    });
+    return res;
+  },
+
   // ── Resumes ───────────────────────────────────────────────────────────────
   async getRankings(jobId: string): Promise<any[]> {
     const res= await apiFetch<any[]>('/api/jobs/rankings', {
