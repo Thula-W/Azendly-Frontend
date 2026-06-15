@@ -8,7 +8,8 @@ import {
   Trash2, 
   Briefcase, 
   Eye,
-  FileText
+  FileText,
+  ThumbsUp 
 } from 'lucide-react';
 import { Job } from '../../types';
 import { apiService } from '../../services/api';
@@ -17,6 +18,7 @@ import UploadResumes from './UploadResumes';
 import JobDetailView from './JobDetailView';
 import BillingView from './BillingView';
 import { supabase } from '../../lib/supabase';
+import FeedbackModal, { FeedbackData } from './FeedbackModal';
 
 interface DashboardProps {
   onModalToggle?: (isOpen: boolean) => void;
@@ -161,6 +163,24 @@ export default function Dashboard({ onModalToggle }: DashboardProps) {
     if (typeof rankingsRemaining === 'number') setRanks(rankingsRemaining);
   };
 
+  // Feedback modal state (closed by default)
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+
+  // Handler for feedback submissions
+  const handleFeedbackSubmit = async (data: FeedbackData) => {
+    try {
+      await apiService.addFeedback(data, userId ?? undefined);
+      setIsFeedbackOpen(false);
+    } catch (err) {
+      console.error('Failed sending feedback profile', err);
+    }
+  };
+
+  // Include feedback modal state in the global modal toggle tracking
+  useEffect(() => {
+    onModalToggle?.(isAddModalOpen || !!deleteConfirm || isFeedbackOpen);
+  }, [isAddModalOpen, deleteConfirm, isFeedbackOpen, onModalToggle]);
+
   const selectedJob = jobs.find(j => j.id === selectedJobId) || null;
 
   if (viewMode === 'upload' && selectedJob) {
@@ -250,11 +270,12 @@ export default function Dashboard({ onModalToggle }: DashboardProps) {
           <div className="w-full lg:w-auto">
             <button 
               onClick={() => setIsAddModalOpen(true)}
-              className="w-full lg:w-auto px-8 py-3.5 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-xl text-white font-bold flex items-center justify-center gap-2 hover:scale-[1.02] transition-all shadow-xl shadow-cyan-500/10"
+              className="w-full lg:w-auto px-4 py-3 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-xl text-white font-bold flex items-center justify-center gap-2 hover:scale-[1.02] transition-all shadow-xl shadow-cyan-500/10"
             >
               <Plus size={20} />
               Add New Job
             </button>
+            
           </div>
         </div>
 
@@ -384,6 +405,18 @@ export default function Dashboard({ onModalToggle }: DashboardProps) {
         )}
       </div>
 
+      {/* Fixed feedback button */}
+      <div className="fixed bottom-8 right-6 z-50">
+        <button
+          onClick={() => setIsFeedbackOpen(true)}
+          className="w-full lg:w-auto px-4 py-2 bg-gradient-to-r from-purple-600 to-cyan-600 rounded-xl text-white font-bold flex items-center justify-center gap-2 hover:scale-[1.02] transition-all shadow-xl shadow-cyan-500/10"
+            
+        >
+          <ThumbsUp size={16} />
+          Give Feedback
+        </button>
+      </div>
+
       <AnimatePresence>
         {isAddModalOpen && (
           <AddJobModal 
@@ -448,6 +481,13 @@ export default function Dashboard({ onModalToggle }: DashboardProps) {
               </div>
             </motion.div>
           </div>
+        )}
+        {isFeedbackOpen && (
+          <FeedbackModal
+            isOpen={isFeedbackOpen}
+            onClose={() => setIsFeedbackOpen(false)}
+            onSubmit={handleFeedbackSubmit}
+          />
         )}
       </AnimatePresence>
     </div>

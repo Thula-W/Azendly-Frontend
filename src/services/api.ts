@@ -1,5 +1,6 @@
 import { Job, Resume } from '../types';
 import { supabase } from '../lib/supabase';
+import { FeedbackData } from '../components/Dashboard/FeedbackModal';
 
 const API_BASE =  '';
 
@@ -44,6 +45,19 @@ export const apiService = {
     });
     return res;
   },
+
+  async addFeedback( feedbackData: FeedbackData, userId?: string ): Promise<any> {
+    const res = await apiFetch<any[]>('/api/users/feedback', {
+      method: 'POST',
+      headers: await authHeaders(),
+      body: JSON.stringify({ 
+        feedback : feedbackData,
+        userId : userId,
+       }),
+    });
+    return res;
+  },
+
 
   // ── Jobs ──────────────────────────────────────────────────────────────────
 
@@ -107,11 +121,6 @@ export const apiService = {
     });
   },
 
-  /**
-   * POST /api/jobs/rerank-job
-   * Body: { jobId }
-   * Middleware: authenticate, checkJobStatus
-   */
   async rankJob(jobId: string): Promise<void> {
     await apiFetch<void>('/api/jobs/rerank-job', {
       method: 'POST',
