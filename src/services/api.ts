@@ -2,7 +2,7 @@ import { Job, Resume } from '../types';
 import { supabase } from '../lib/supabase';
 import { FeedbackData } from '../components/Dashboard/FeedbackModal';
 
-const API_BASE =  '';
+const API_BASE =  "https://api.azendly.net";
 
 async function getAuthToken(): Promise<string> {
   const { data: { session }, error } = await supabase.auth.getSession();
