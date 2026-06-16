@@ -219,21 +219,13 @@ export default function Dashboard({ onModalToggle }: DashboardProps) {
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-8 gap-4">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-4 mb-2">
+            <div className="flex flex-col md:flex-row md:items-center  gap-4 mb-2">
               <h1 className="text-3xl md:text-4xl font-black text-white">Dashboard</h1>
-              {/* {credits !== null && (
-                <div className="flex items-center gap-2 px-3 py-1 bg-cyan-500/10 border border-cyan-500/20 rounded-full flex-shrink-0">
-                  <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-                  <span className="text-[10px] md:text-xs font-black text-white uppercase tracking-wider whitespace-nowrap">
-                    {credits} Resumes Remaining
-                  </span>
-                </div>
-              )} */}
-              {/* Container ensuring items align nicely */}
+
               <div className="flex items-center gap-2 flex-shrink-0">
                 {(credits !== null || ranks !== null) && (
                   <div className="flex items-center bg-zinc-900/50 backdrop-blur-sm border border-zinc-800 rounded-full px-1 py-1 shadow-inner">
-                    <span className="hidden md:block pl-3 pr-1 text-[11px] font-black text-white uppercase tracking-wider ">
+                    <span className=" pl-3 pr-1 text-[11px] font-black text-white uppercase tracking-wider ">
                       Remaining:
                     </span>
                     {/* Credits Quota */}
