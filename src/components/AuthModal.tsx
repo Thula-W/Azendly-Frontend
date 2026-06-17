@@ -44,20 +44,26 @@ export default function AuthModal({ isOpen, onClose, mode, setMode, onLogin }: A
     setLoading(true);
     try {
       if (mode === 'signup') {
-        const { error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: { full_name: fullName },
-          },
+        const { data, error } = await supabase.functions.invoke('custom-signup', {
+          body: { name: fullName, email, password },
         });
-        if (signUpError) throw signUpError;
+        console.log('Signup function response:', { data, error });
+        if (error) {
+          const body = await (error as any).context?.json?.();
+          console.log('actual error:', body);
+          throw new Error(body?.error ?? error.message);
+        }
+        setSuccessMsg('Check your email to verify your account before signing in.');
 
-        // Supabase sends a confirmation email by default.
-        // If you have "Confirm email" disabled in the Supabase dashboard,
-        // onAuthStateChange will fire a SIGNED_IN event and onLogin() will be
-        // called automatically from App.tsx — no need to call it here.
-        setSuccessMsg('Account created! Check your email to confirm your address.');
+        // const { error: signUpError } = await supabase.auth.signUp({
+        //   email,
+        //   password,
+        //   options: {
+        //     data: { full_name: fullName },
+        //   },
+        // });
+        // if (signUpError) throw signUpError;
+        // setSuccessMsg('Account created! Check your email to confirm your address.');
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
         if (signInError) throw signInError;
@@ -136,7 +142,7 @@ export default function AuthModal({ isOpen, onClose, mode, setMode, onLogin }: A
                 <p className="text-sm text-gray-400 max-w-xs mx-auto">
                   {mode === 'login'
                     ? 'Enter your credentials to access your account'
-                    : 'Join Azendly and start hiring the top 1%'}
+                    : 'Join Azendly and start hiring the top 10%'}
                 </p>
               </div>
 

@@ -1,12 +1,12 @@
 import { motion } from 'motion/react';
 import { scrollToWaitlist } from '../lib/scrollToWaitlist';
 
-export default function Hero() {
-  return (
+export default function Hero({ onGetStarted }){
+  return ( 
     <section className="pt-28 pb-16 px-6">
       <div className="max-w-7xl mx-auto text-center">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 20 }} 
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
@@ -21,7 +21,7 @@ export default function Hero() {
           </p>
           <div className="flex flex-col items-center justify-center gap-4">
             <button 
-              onClick={() => scrollToWaitlist()}
+              onClick={onGetStarted}
               className="gradient-border px-8 py-4 rounded-full text-xl font-bold hover:scale-105 transition-transform shadow-lg shadow-cyan-500/20"
             >
               GET STARTED FOR FREE

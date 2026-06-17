@@ -15,9 +15,20 @@ import FoundersVision from './components/FoundersVision';
 import AuthModal from './components/AuthModal';
 import Footer from './components/Footer';
 import Dashboard from './components/Dashboard/JobDashboard';
+import VerifyEmail from './components/VerifyEmail';
+import { useLocation } from 'react-router-dom';
 
 function AppContent() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.openLogin) {
+      setAuthModal({ isOpen: true, mode: 'login' });
+      // clear the state so modal doesn't reopen on refresh
+      window.history.replaceState({}, '');
+    }
+  }, [location.state]);
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -145,7 +156,7 @@ function AppContent() {
             path="/"
             element={
               <>
-                <Hero />
+                <Hero onGetStarted={() => setAuthModal({ isOpen: true, mode: 'signup' })} />
                 <Problem />
                 <Solution />
                 <HowItWorks />
@@ -174,6 +185,7 @@ function AppContent() {
                 : <Navigate to="/" replace />
             }
           />
+          <Route path="/verify" element={<VerifyEmail />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
